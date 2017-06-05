@@ -1,0 +1,12 @@
+function(liblinux_test source_path)
+  get_filename_component(directory ${source_path} DIRECTORY)
+  get_filename_component(filename ${source_path} NAME_WE)
+  set(target_name ${directory}-${filename})
+  add_executable(${target_name} ${source_path})
+  target_compile_options(${target_name} PUBLIC ${project_compiler_flags})
+  target_link_libraries(${target_name} linuxpp gtest gtest_main)
+  add_test(${target_name} ${target_name})
+endfunction()
+
+include_directories(../include ../googletest/include)
+liblinux_test(unique_fd/test.cpp)
