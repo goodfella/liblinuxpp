@@ -8,5 +8,8 @@ target_compile_options(linuxpp INTERFACE -std=c++14)
 enable_testing()
 
 set(project_compiler_flags -pedantic -Wall)
+
+include_directories(googletest/include)
+
 add_subdirectory(googletest)
 add_subdirectory(test)
