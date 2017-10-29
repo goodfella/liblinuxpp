@@ -8,5 +8,5 @@ function(liblinux_test source_path)
   add_test(${target_name} ${target_name})
 endfunction()
 
-include_directories(../include ../googletest/include)
 liblinux_test(unique_fd/test.cpp)
+liblinux_test(pipe/test.cpp)
