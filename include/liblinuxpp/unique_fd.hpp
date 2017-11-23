@@ -8,12 +8,10 @@
 #include <tuple>
 
 #include "default_close.hpp"
+#include "file_descriptor.hpp"
 
 namespace linuxpp
 {
-    /// Represents an invalid file descriptor
-    constexpr int closed_fd = -1;
-
     /** Provides unique ownership of a file descriptor
      *
      *  The unique_fd class uniquely owns a file descriptor and will
@@ -79,8 +77,8 @@ namespace linuxpp
         unique_fd(const unique_fd&) = delete;
         unique_fd& operator= (const unique_fd&) = delete;
 
-        unique_fd(unique_fd&& src) noexcept;
-        unique_fd& operator= (unique_fd&& src) noexcept;
+        unique_fd(unique_fd&& src) = default;
+        unique_fd& operator= (unique_fd&& src) = default;
 
         /** Releases ownership of the file descriptor
          *
@@ -92,7 +90,7 @@ namespace linuxpp
          *
          *  @param fd The file descriptor to manage
          */
-        void reset(int fd = linuxpp::closed_fd) noexcept;
+        void reset(const int fd = linuxpp::closed_fd) noexcept;
 
         void swap(unique_fd & other) noexcept;
 
@@ -115,7 +113,7 @@ namespace linuxpp
             closer_member
         };
 	
-        using tuple_type = std::tuple<int, closer_type>;
+        using tuple_type = std::tuple<linuxpp::file_descriptor, closer_type>;
         tuple_type members_;
     };
 
@@ -128,7 +126,7 @@ namespace linuxpp
     template <class Closer>
     inline int unique_fd<Closer>::get() const noexcept
     {
-        return std::get<fd_member>(members_);
+        return std::get<fd_member>(members_).get();
     }
 
     template <class Closer>
@@ -152,12 +150,13 @@ namespace linuxpp
     }
 
     template <class Closer>
-    inline void unique_fd<Closer>::reset(int fd) noexcept
+    inline void unique_fd<Closer>::reset(const int fd) noexcept
     {
-        std::swap(std::get<fd_member>(members_), fd);
-        if (fd != linuxpp::closed_fd)
+        const int old_fd = std::get<fd_member>(members_).get();
+        std::get<fd_member>(members_).reset(fd);
+        if (old_fd != linuxpp::closed_fd)
         {
-                this->get_closer()(fd);
+                this->get_closer()(old_fd);
         }
     }
 
@@ -165,20 +164,6 @@ namespace linuxpp
     inline unique_fd<Closer>::operator bool () const noexcept
     {
         return this->get() != linuxpp::closed_fd;
-    }
-
-    template <class Closer>
-    inline unique_fd<Closer>::unique_fd(unique_fd<Closer>&& other) noexcept:
-                                                          members_(other.release(),
-                                                                   std::forward<closer_type>(other.get_closer()))
-    {}
-
-    template <class Closer>
-    inline unique_fd<Closer>& unique_fd<Closer>::operator=(unique_fd<Closer>&& other) noexcept
-    {
-        this->reset(other.release());
-        this->get_closer() = std::forward<closer_type>(other.get_closer());
-        return *this;
     }
 
     template <class Closer>
