@@ -9,12 +9,8 @@ target_compile_options(linuxpp INTERFACE -std=c++14)
 target_compile_options(linuxpp PRIVATE -std=c++14 -pedantic -Wall -Werror)
 target_link_libraries(linuxpp ndgpp)
 
-enable_testing()
-
 set(project_compiler_flags -pedantic -Wall)
 
-include_directories(googletest/include)
-
-add_subdirectory(googletest)
-add_subdirectory(libndgpp)
-add_subdirectory(test)
+if (LIBLINUXPP_UNIT_TESTS)
+  add_subdirectory(test)
+endif()
