@@ -29,7 +29,7 @@ std::array<int, 2> linuxpp::pipe_fd(const int flags)
 
 std::array<linuxpp::unique_fd<>, 2> linuxpp::pipe_unique_fd(const int flags)
 {
-    std::array<int, 2> pipeFds = linuxpp::pipe_fd(flags);
+    const std::array<int, 2> pipeFds = linuxpp::pipe_fd(flags);
     return std::array<linuxpp::unique_fd<>, 2>{pipeFds[0], pipeFds[1]};
 }
 
