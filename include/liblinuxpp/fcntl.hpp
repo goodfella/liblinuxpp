@@ -21,7 +21,7 @@ int linuxpp::fcntl(const int fd, const int cmd, Args&& ... args)
     const int ret = ::fcntl(fd, cmd, std::forward<Args>(args)...);
     if (ret == -1)
     {
-        throw NDGPP_ERROR(std::system_error,
+        throw ndgpp_error(std::system_error,
                           errno,
                           std::system_category(),
                           "fcntl failed");

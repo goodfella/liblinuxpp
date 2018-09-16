@@ -141,7 +141,7 @@ auto linuxpp::pipe::write(const T& obj) -> typename std::enable_if<std::is_pod<T
 
     if (errno_val != 0)
     {
-        throw NDGPP_ERROR(std::system_error,
+        throw ndgpp_error(std::system_error,
                           errno_val,
                           std::system_category(),
                           "object write failed");
@@ -181,7 +181,7 @@ inline auto linuxpp::pipe::read() -> typename std::enable_if<std::is_pod<T>::val
 
     if (std::get<0>(ret) != 0)
     {
-        throw NDGPP_ERROR(std::system_error,
+        throw ndgpp_error(std::system_error,
                           std::get<0>(ret),
                           std::system_category(),
                           "object read failed");

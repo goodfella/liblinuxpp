@@ -18,7 +18,7 @@ std::array<int, 2> linuxpp::pipe_fd(const int flags)
     const int ret = ::pipe2(pipeFds.data(), flags);
     if (ret == -1)
     {
-        throw NDGPP_ERROR(std::system_error,
+        throw ndgpp_error(std::system_error,
                           errno,
                           std::system_category(),
                           "pipe2 failed");
@@ -59,7 +59,7 @@ std::size_t linuxpp::pipe::write(void const * const buf, const std::size_t size)
 
     if (std::get<0>(ret) != 0)
     {
-        throw NDGPP_ERROR(std::system_error,
+        throw ndgpp_error(std::system_error,
                           std::get<0>(ret),
                           std::system_category(),
                           "write system call failed");
@@ -90,7 +90,7 @@ std::size_t linuxpp::pipe::read(void * const buf, const std::size_t size)
 
     if (std::get<0>(ret) != 0)
     {
-        throw NDGPP_ERROR(std::system_error,
+        throw ndgpp_error(std::system_error,
                           std::get<0>(ret),
                           std::system_category(),
                           "read system call failed");
