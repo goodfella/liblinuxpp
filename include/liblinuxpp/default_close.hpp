@@ -12,7 +12,7 @@ namespace linuxpp
 	void operator()(const int fd) const noexcept;
     };
 
-    void default_close::operator()(const int fd) const noexcept
+    inline void default_close::operator()(const int fd) const noexcept
     {
 	::close(fd);
     }
