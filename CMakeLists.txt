@@ -2,7 +2,9 @@ cmake_minimum_required(VERSION 3.5.1)
 project(liblinuxpp CXX)
 
 add_library(linuxpp SHARED
-  src/pipe.cpp)
+  src/pipe.cpp
+  src/open.cpp)
+
 target_include_directories(linuxpp INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_include_directories(linuxpp PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_compile_options(linuxpp INTERFACE -std=c++14)
