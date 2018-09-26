@@ -4,7 +4,16 @@ project(liblinuxpp CXX)
 add_library(linuxpp SHARED
   src/pipe.cpp
   src/open.cpp
-  src/epoll.cpp)
+  src/epoll.cpp
+  src/subprocess/wait.cpp
+  src/subprocess/status.cpp
+  src/subprocess/stream.cpp
+  src/subprocess/pipe_stream.cpp
+  src/subprocess/path_stream.cpp
+  src/subprocess/null_stream.cpp
+  src/subprocess/stream_descriptors.cpp
+  src/subprocess/argv.cpp
+  src/subprocess/popen.cpp)
 
 target_include_directories(linuxpp INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_include_directories(linuxpp PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
