@@ -41,6 +41,8 @@ namespace linuxpp
 
         void reset(T fd = type_traits::invalid_value) noexcept;
 
+        T release() noexcept;
+
         explicit operator bool() const noexcept;
 
         private:
@@ -84,6 +86,14 @@ namespace linuxpp
     inline void int_descriptor<Tag, T>::reset(const T descriptor) noexcept
     {
         this->descriptor_ = descriptor;
+    }
+
+    template <class Tag, class T>
+    inline T int_descriptor<Tag, T>::release() noexcept
+    {
+        const auto old = this->descriptor_;
+        this->descriptor_ = type_traits::invalid_value;
+        return old;
     }
 
     template <class Tag, class T>
