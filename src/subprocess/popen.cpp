@@ -373,6 +373,16 @@ void linuxpp::subprocess::popen::signal(const int signal)
     }
 }
 
+linuxpp::pid linuxpp::subprocess::popen::pid() const noexcept
+{
+    return std::get<child_pid>(this->members_);
+}
+
+linuxpp::subprocess::status linuxpp::subprocess::popen::status() const noexcept
+{
+    return std::get<child_status>(this->members_);
+}
+
 linuxpp::unique_fd<> & linuxpp::subprocess::popen::stdin() noexcept
 {
     return std::get<stdin_stream>(this->members_);

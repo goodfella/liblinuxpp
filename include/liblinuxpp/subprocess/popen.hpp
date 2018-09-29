@@ -41,6 +41,7 @@ namespace subprocess
         const linuxpp::unique_fd<>& stderr() const noexcept;
 
         linuxpp::pid pid() const noexcept;
+        linuxpp::subprocess::status status() const noexcept;
 
         private:
 
