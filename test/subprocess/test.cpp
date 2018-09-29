@@ -16,7 +16,7 @@
 
 std::string test_path;
 
-TEST(bad_executable, throws)
+TEST(ctor, bad_executable)
 {
     const auto throws = [] () {
         linuxpp::subprocess::popen bin{{"/dev/zero", "--exit-code", 5},
@@ -26,7 +26,7 @@ TEST(bad_executable, throws)
     EXPECT_THROW(throws(), ndgpp::error<std::system_error>);
 }
 
-TEST(exit_code, non_zero)
+TEST(member_tests, wait_exit_code_non_zero)
 {
     linuxpp::subprocess::popen bin{{test_path, "--exit-code", 5},
                                    {}};
@@ -40,7 +40,7 @@ TEST(exit_code, non_zero)
     EXPECT_EQ(5, status.exit_code());
 }
 
-TEST(exit_code, zero)
+TEST(member_tests, wait_exit_code_zero)
 {
     linuxpp::subprocess::popen bin{{test_path, "--exit-code", 0},
                                    {}};
@@ -54,7 +54,7 @@ TEST(exit_code, zero)
     EXPECT_EQ(0, status.exit_code());
 }
 
-TEST(signals, signal_receiption)
+TEST(member_tests, signal)
 {
     sigset_t sigset;
     sigemptyset(&sigset);
@@ -75,7 +75,7 @@ TEST(signals, signal_receiption)
     EXPECT_EQ(SIGUSR1, status.signal());
 }
 
-TEST(poll, signaled)
+TEST(member_tests, poll_signaled)
 {
     {
         sigset_t sigset;
@@ -107,6 +107,32 @@ TEST(poll, signaled)
         EXPECT_FALSE(status.called_exit());
         EXPECT_TRUE(status.signaled());
         EXPECT_EQ(SIGKILL, status.signal());
+    }
+}
+
+TEST(member_tests, poll_exit_code_zero)
+{
+    {
+        sigset_t sigset;
+        sigemptyset(&sigset);
+        sigaddset(&sigset, SIGCHLD);
+
+        // Block SIGCHLD so sigtimedwait will work
+        ASSERT_EQ(0, pthread_sigmask(SIG_BLOCK, &sigset, nullptr));
+
+        linuxpp::subprocess::popen bin{{test_path, "--exit-code", 0},
+                                       {}};
+
+        struct timespec timeout = {5, 0};
+        const int signal = ::sigtimedwait(&sigset, nullptr, &timeout);
+        ASSERT_EQ(SIGCHLD, signal);
+
+        const auto status = bin.poll();
+        EXPECT_TRUE(static_cast<bool>(status));
+        EXPECT_TRUE(status.exited());
+        EXPECT_TRUE(status.called_exit());
+        EXPECT_FALSE(status.signaled());
+        EXPECT_EQ(0, status.exit_code());
     }
 }
 
