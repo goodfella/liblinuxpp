@@ -75,6 +75,41 @@ TEST(signals, signal_receiption)
     EXPECT_EQ(SIGUSR1, status.signal());
 }
 
+TEST(poll, signaled)
+{
+    {
+        sigset_t sigset;
+        sigemptyset(&sigset);
+        sigaddset(&sigset, SIGCHLD);
+
+        // Block SIGCHLD so sigtimedwait will work
+        ASSERT_EQ(0, pthread_sigmask(SIG_BLOCK, &sigset, nullptr));
+
+        linuxpp::subprocess::popen bin{{test_path, "--signal"},
+                                       {}};
+
+        {
+            const auto status = bin.poll();
+            ASSERT_FALSE(static_cast<bool>(status));
+            ASSERT_FALSE(status.exited());
+            ASSERT_FALSE(status.called_exit());
+            ASSERT_FALSE(status.signaled());
+        }
+
+        struct timespec timeout = {5, 0};
+        bin.signal(SIGKILL);
+        const int signal = ::sigtimedwait(&sigset, nullptr, &timeout);
+        ASSERT_EQ(SIGCHLD, signal);
+
+        const auto status = bin.poll();
+        EXPECT_TRUE(static_cast<bool>(status));
+        EXPECT_TRUE(status.exited());
+        EXPECT_FALSE(status.called_exit());
+        EXPECT_TRUE(status.signaled());
+        EXPECT_EQ(SIGKILL, status.signal());
+    }
+}
+
 struct test_settings
 {
     bool run_tests = true;

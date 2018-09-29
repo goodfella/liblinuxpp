@@ -44,13 +44,15 @@ namespace subprocess
 
         private:
 
+        linuxpp::subprocess::status wait(const int options);
+
         enum members
         {
             child_pid,
             stdin_stream,
             stdout_stream,
             stderr_stream,
-            status,
+            child_status,
         };
 
         using tuple_type = std::tuple<linuxpp::pid,

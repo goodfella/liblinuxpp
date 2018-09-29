@@ -197,7 +197,7 @@ linuxpp::subprocess::popen::popen(const linuxpp::subprocess::argv& argv,
 
     const int ret = ::clone(&clone_handler,
                             child_stack.get() + (stack_size - 1),
-                            CLONE_VM | CLONE_VFORK,
+                            CLONE_VM | CLONE_VFORK | SIGCHLD,
                             &descriptor);
     lock.unlock();
 
@@ -323,27 +323,37 @@ linuxpp::subprocess::popen::~popen()
 }
 
 linuxpp::subprocess::status
-linuxpp::subprocess::popen::wait()
+linuxpp::subprocess::popen::wait(const int options)
 {
     if (!std::get<child_pid>(this->members_).get())
     {
         /// subprocess has already been waited on
-        return std::get<status>(this->members_);
+        return std::get<child_status>(this->members_);
     }
 
     siginfo_t siginfo = {};
     const bool child_exited = linuxpp::subprocess::waitid(P_PID,
                                                           std::get<child_pid>(this->members_).get(),
                                                           siginfo,
-                                                          WEXITED);
+                                                          options);
 
     if (child_exited)
     {
         std::get<child_pid>(this->members_).release();
-        std::get<status>(this->members_) = linuxpp::subprocess::status(siginfo);
+        std::get<child_status>(this->members_) = linuxpp::subprocess::status(siginfo);
     }
 
-    return std::get<status>(this->members_);
+    return std::get<child_status>(this->members_);
+}
+
+linuxpp::subprocess::status linuxpp::subprocess::popen::wait()
+{
+    return this->wait(WEXITED);
+}
+
+linuxpp::subprocess::status linuxpp::subprocess::popen::poll()
+{
+    return this->wait(WEXITED | WNOHANG);
 }
 
 void linuxpp::subprocess::popen::signal(const int signal)
