@@ -5,7 +5,6 @@
 
 #include <mutex>
 #include <tuple>
-#include <string>
 
 #include <liblinuxpp/subprocess/stream.hpp>
 #include <liblinuxpp/subprocess/streams.hpp>
@@ -18,18 +17,52 @@ namespace linuxpp
 {
 namespace subprocess
 {
+    /** Manages a subprocess
+     *
+     *  @par Copy Semantics Non-copyable
+     */
     class popen
     {
         public:
 
+        /** Spawns a subprocess
+         *
+         *  This version spawns the subprocess using the execve system
+         *  call.
+         */
         popen(const linuxpp::subprocess::argv& argv,
               const linuxpp::subprocess::streams& streams);
 
         ~popen();
 
+        popen(const popen&) = delete;
+        popen& operator=(const popen&) = delete;
+
+        /** Blocks until the subprocess exits
+         *
+         *  @throws ndgpp::error<std::system_error> on error
+         */
         linuxpp::subprocess::status wait();
+
+        /** Checks if the subprocess has exited
+         *
+         *  @return linuxpp::subprocess::status that represents an
+         *          exited process if the subprocess has exited, else,
+         *          returns a default constructed
+         *          linuxpp::subprocess::status object
+         *
+         *  @throws ndgpp::error<std::system_error> on error
+         */
         linuxpp::subprocess::status poll();
 
+        /** Sends a signal to the subprocess
+         *
+         *  @param signal The signal to send to the subprocess
+         *
+         *  @throws ndgpp::error<std::system_error> on error, or
+         *          ndgpp::error<std::logic_error> if the popen object
+         *          is no longer associated with a running subprocess
+         */
         void signal(const int signal);
 
         linuxpp::unique_fd<>& stdin() noexcept;
@@ -40,6 +73,14 @@ namespace subprocess
         const linuxpp::unique_fd<>& stdout() const noexcept;
         const linuxpp::unique_fd<>& stderr() const noexcept;
 
+        /** Returns the subprocess's pid
+         *
+         *  @note Once linuxpp::subprocess::popen::wait returns or
+         *        linuxpp::subprocess::popen::poll returns a status
+         *        object that represents an exited subprocess, this
+         *        function returns a linuxpp::pid assigned to
+         *        linuxp::invalid_pid.
+         */
         linuxpp::pid pid() const noexcept;
         linuxpp::subprocess::status status() const noexcept;
 
