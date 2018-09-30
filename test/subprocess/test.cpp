@@ -16,6 +16,46 @@
 
 std::string test_path;
 
+bool wait_for(linuxpp::subprocess::popen & bin, const std::chrono::seconds timeout)
+{
+    sigset_t sigset;
+    sigemptyset(&sigset);
+    sigaddset(&sigset, SIGCHLD);
+
+    struct timespec timespec_timeout = {0, 0};
+
+    const auto start = std::chrono::steady_clock::now();
+    auto end = start;
+    while (true)
+    {
+        const auto elapsed_time = std::chrono::duration_cast<std::chrono::seconds>(end - start);
+        if (elapsed_time >= timeout)
+        {
+            return false;
+        }
+
+        timespec_timeout.tv_sec = timeout.count() - elapsed_time.count();
+        const int signal = ::sigtimedwait(&sigset, nullptr, &timespec_timeout);
+        end = std::chrono::steady_clock::now();
+
+        if (signal == -1)
+        {
+            return false;
+        }
+
+        if (signal != SIGCHLD)
+        {
+            continue;
+        }
+
+        const auto status = bin.poll();
+        if (status)
+        {
+            return true;
+        }
+    }
+}
+
 TEST(ctor, bad_executable)
 {
     const auto throws = [] () {
@@ -78,13 +118,6 @@ TEST(member_tests, signal)
 TEST(member_tests, poll_signaled)
 {
     {
-        sigset_t sigset;
-        sigemptyset(&sigset);
-        sigaddset(&sigset, SIGCHLD);
-
-        // Block SIGCHLD so sigtimedwait will work
-        ASSERT_EQ(0, pthread_sigmask(SIG_BLOCK, &sigset, nullptr));
-
         linuxpp::subprocess::popen bin{{test_path, "--signal"},
                                        {}};
 
@@ -96,12 +129,10 @@ TEST(member_tests, poll_signaled)
             ASSERT_FALSE(status.signaled());
         }
 
-        struct timespec timeout = {5, 0};
         bin.signal(SIGKILL);
-        const int signal = ::sigtimedwait(&sigset, nullptr, &timeout);
-        ASSERT_EQ(SIGCHLD, signal);
+        ASSERT_TRUE(wait_for(bin, std::chrono::seconds{5}));
 
-        const auto status = bin.poll();
+        const auto status = bin.status();
         EXPECT_TRUE(static_cast<bool>(status));
         EXPECT_TRUE(status.exited());
         EXPECT_FALSE(status.called_exit());
@@ -113,21 +144,12 @@ TEST(member_tests, poll_signaled)
 TEST(member_tests, poll_exit_code_zero)
 {
     {
-        sigset_t sigset;
-        sigemptyset(&sigset);
-        sigaddset(&sigset, SIGCHLD);
-
-        // Block SIGCHLD so sigtimedwait will work
-        ASSERT_EQ(0, pthread_sigmask(SIG_BLOCK, &sigset, nullptr));
-
         linuxpp::subprocess::popen bin{{test_path, "--exit-code", 0},
                                        {}};
 
-        struct timespec timeout = {5, 0};
-        const int signal = ::sigtimedwait(&sigset, nullptr, &timeout);
-        ASSERT_EQ(SIGCHLD, signal);
+        ASSERT_TRUE(wait_for(bin, std::chrono::seconds{5}));
 
-        const auto status = bin.poll();
+        const auto status = bin.status();
         EXPECT_TRUE(static_cast<bool>(status));
         EXPECT_TRUE(status.exited());
         EXPECT_TRUE(status.called_exit());
@@ -172,6 +194,18 @@ int main(int argc, char ** argv)
 
     if (settings.run_tests)
     {
+        sigset_t sigset;
+        sigemptyset(&sigset);
+        sigaddset(&sigset, SIGCHLD);
+
+        // Block SIGCHLD so sigtimedwait will work
+        const int ret = pthread_sigmask(SIG_BLOCK, &sigset, nullptr);
+        if (ret == -1)
+        {
+            std::cerr << "failed to block SIGCHLD\n";
+            return 1;
+        }
+
         ::testing::InitGoogleTest(&argc, argv);
         return RUN_ALL_TESTS();
     }
