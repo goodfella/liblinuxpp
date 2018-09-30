@@ -3,7 +3,8 @@ project(liblinuxpp CXX)
 
 add_library(linuxpp SHARED
   src/pipe.cpp
-  src/open.cpp)
+  src/open.cpp
+  src/epoll.cpp)
 
 target_include_directories(linuxpp INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_include_directories(linuxpp PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
