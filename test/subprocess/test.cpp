@@ -7,12 +7,18 @@
 #include <exception>
 #include <system_error>
 #include <iostream>
+#include <string>
 #include <thread>
+#include <vector>
 
 #include <gtest/gtest.h>
 
 #include <libndgpp/error.hpp>
+
+#include <liblinuxpp/epoll.hpp>
+#include <liblinuxpp/read.hpp>
 #include <liblinuxpp/subprocess/popen.hpp>
+#include <liblinuxpp/write.hpp>
 
 std::string test_path;
 
@@ -59,7 +65,7 @@ bool wait_for(linuxpp::subprocess::popen & bin, const std::chrono::seconds timeo
 TEST(ctor, bad_executable)
 {
     const auto throws = [] () {
-        linuxpp::subprocess::popen bin{{"/dev/zero", "--exit-code", 5},
+        linuxpp::subprocess::popen bin{{"/dev/zero"},
                                        {}};
     };
 
@@ -68,7 +74,7 @@ TEST(ctor, bad_executable)
 
 TEST(member_tests, wait_exit_code_non_zero)
 {
-    linuxpp::subprocess::popen bin{{test_path, "--exit-code", 5},
+    linuxpp::subprocess::popen bin{{test_path, "--exit-code", 1},
                                    {}};
 
     const auto status = bin.wait();
@@ -77,7 +83,7 @@ TEST(member_tests, wait_exit_code_non_zero)
     EXPECT_TRUE(status.called_exit());
     EXPECT_FALSE(status.signaled());
     EXPECT_FALSE(status.dumped());
-    EXPECT_EQ(5, status.exit_code());
+    EXPECT_EQ(1, status.exit_code());
 }
 
 TEST(member_tests, wait_exit_code_zero)
@@ -158,9 +164,238 @@ TEST(member_tests, poll_exit_code_zero)
     }
 }
 
+class stream_test: public ::testing::Test
+{
+    protected:
+
+    stream_test();
+
+    linuxpp::epoll epoll;
+    std::string stdin_value = "In in in as fast as you can, you can't catch me I'm the stinky cheese man";
+    std::string stdout_value = "Out out out as fast as you can, you can't catch me I'm the stinky cheese man";
+    std::string stderr_value = "Error error error as fast as you can, you can't catch me I'm the stinky cheese man";
+    std::vector<char> stdout_buf;
+    std::vector<char> stderr_buf;
+};
+
+stream_test::stream_test():
+    stdout_buf(stdout_value.length()),
+    stderr_buf(stderr_value.length())
+{}
+
+TEST_F(stream_test, stdin_pipe)
+{
+    linuxpp::subprocess::popen bin{{test_path, "--stdin", stdin_value},
+                                   {linuxpp::subprocess::stdin{linuxpp::subprocess::pipe_stream{}}}};
+
+    {
+        const std::size_t ret = linuxpp::write(bin.stdin().get(), stdin_value.data(), stdin_value.length());
+        ASSERT_EQ(stdin_value.length(), static_cast<std::size_t>(ret));
+    }
+
+    ASSERT_TRUE(wait_for(bin, std::chrono::seconds{5}));
+
+    const auto status = bin.status();
+    EXPECT_TRUE(static_cast<bool>(status));
+    EXPECT_TRUE(status.exited());
+    EXPECT_TRUE(status.called_exit());
+    EXPECT_FALSE(status.signaled());
+    EXPECT_EQ(0, status.exit_code());
+}
+
+TEST_F(stream_test, stdin_stdout_pipe)
+{
+    linuxpp::subprocess::popen bin{{test_path, "--stdin", stdin_value, "--stdout", stdout_value},
+                                   {linuxpp::subprocess::stdin{linuxpp::subprocess::pipe_stream{}},
+                                    linuxpp::subprocess::stdout{linuxpp::subprocess::pipe_stream{}}}};
+
+    {
+        const std::size_t ret = linuxpp::write(bin.stdin().get(), stdin_value.data(), stdin_value.length());
+        ASSERT_EQ(stdin_value.length(), static_cast<std::size_t>(ret));
+    }
+
+    {
+        epoll.add(bin.stdout().get(), EPOLLIN);
+        const auto ready_fds = epoll.wait(std::chrono::seconds{5});
+        ASSERT_EQ(1U, ready_fds.size());
+
+        const auto length = linuxpp::read(bin.stdout().get(), stdout_buf.data(), stdout_buf.size());
+        ASSERT_EQ(stdout_value.length(), length);
+    }
+
+    ASSERT_TRUE(wait_for(bin, std::chrono::seconds{5}));
+
+    const auto status = bin.status();
+    EXPECT_TRUE(static_cast<bool>(status));
+    EXPECT_TRUE(status.exited());
+    EXPECT_TRUE(status.called_exit());
+    EXPECT_FALSE(status.signaled());
+    EXPECT_EQ(0, status.exit_code());
+}
+
+TEST_F(stream_test, stdin_stderr_pipe)
+{
+    linuxpp::subprocess::popen bin{{test_path, "--stdin", stdin_value, "--stderr", stderr_value},
+                                   {linuxpp::subprocess::stdin{linuxpp::subprocess::pipe_stream{}},
+                                    linuxpp::subprocess::stderr{linuxpp::subprocess::pipe_stream{}}}};
+
+    {
+        const std::size_t ret = linuxpp::write(bin.stdin().get(), stdin_value.data(), stdin_value.length());
+        ASSERT_EQ(stdin_value.length(), static_cast<std::size_t>(ret));
+    }
+
+    {
+        epoll.add(bin.stderr().get(), EPOLLIN);
+        const auto ready_fds = epoll.wait(std::chrono::seconds{5});
+        ASSERT_EQ(1U, ready_fds.size());
+
+        const auto length = linuxpp::read(bin.stderr().get(), stderr_buf.data(), stderr_buf.size());
+        ASSERT_EQ(stderr_value.length(), length);
+    }
+
+    ASSERT_TRUE(wait_for(bin, std::chrono::seconds{5}));
+
+    const auto status = bin.status();
+    EXPECT_TRUE(static_cast<bool>(status));
+    EXPECT_TRUE(status.exited());
+    EXPECT_TRUE(status.called_exit());
+    EXPECT_FALSE(status.signaled());
+    EXPECT_EQ(0, status.exit_code());
+}
+
+TEST_F(stream_test, stdin_stdout_stderr_pipe)
+{
+    linuxpp::subprocess::popen bin{{test_path, "--stdin", stdin_value, "--stdout", stdout_value, "--stderr", stderr_value},
+                                   {linuxpp::subprocess::stdin{linuxpp::subprocess::pipe_stream{}},
+                                    linuxpp::subprocess::stdout{linuxpp::subprocess::pipe_stream{}},
+                                    linuxpp::subprocess::stderr{linuxpp::subprocess::pipe_stream{}}}};
+
+    {
+        const std::size_t ret = linuxpp::write(bin.stdin().get(), stdin_value.data(), stdin_value.length());
+        ASSERT_EQ(stdin_value.length(), static_cast<std::size_t>(ret));
+    }
+
+    {
+        epoll.add(bin.stdout().get(), EPOLLIN);
+        const auto ready_fds = epoll.wait(std::chrono::seconds{5});
+        ASSERT_EQ(1U, ready_fds.size());
+
+        const auto length = linuxpp::read(bin.stdout().get(), stdout_buf.data(), stdout_buf.size());
+        ASSERT_EQ(stdout_value.length(), length);
+    }
+
+    {
+        epoll.del(bin.stdout().get());
+        epoll.add(bin.stderr().get(), EPOLLIN);
+        const auto ready_fds = epoll.wait(std::chrono::seconds{5});
+        ASSERT_EQ(1U, ready_fds.size());
+
+        const auto length = linuxpp::read(bin.stderr().get(), stderr_buf.data(), stderr_buf.size());
+        ASSERT_EQ(stderr_value.length(), length);
+    }
+
+    ASSERT_TRUE(wait_for(bin, std::chrono::seconds{5}));
+
+    const auto status = bin.status();
+    EXPECT_TRUE(static_cast<bool>(status));
+    EXPECT_TRUE(status.exited());
+    EXPECT_TRUE(status.called_exit());
+    EXPECT_FALSE(status.signaled());
+    EXPECT_EQ(0, status.exit_code());
+}
+
+TEST_F(stream_test, stdout_pipe)
+{
+    linuxpp::subprocess::popen bin{{test_path, "--stdout", stdout_value},
+                                   {linuxpp::subprocess::stdout{linuxpp::subprocess::pipe_stream{}}}};
+
+    {
+        epoll.add(bin.stdout().get(), EPOLLIN);
+        const auto ready_fds = epoll.wait(std::chrono::seconds{5});
+        ASSERT_EQ(1U, ready_fds.size());
+
+        const auto length = linuxpp::read(bin.stdout().get(), stdout_buf.data(), stdout_buf.size());
+        ASSERT_EQ(stdout_value.length(), length);
+    }
+
+    ASSERT_TRUE(wait_for(bin, std::chrono::seconds{5}));
+
+    const auto status = bin.status();
+    EXPECT_TRUE(static_cast<bool>(status));
+    EXPECT_TRUE(status.exited());
+    EXPECT_TRUE(status.called_exit());
+    EXPECT_FALSE(status.signaled());
+    EXPECT_EQ(0, status.exit_code());
+}
+
+TEST_F(stream_test, stdout_stderr_pipe)
+{
+    linuxpp::subprocess::popen bin{{test_path, "--stdout", stdout_value, "--stderr", stderr_value},
+                                    {linuxpp::subprocess::stdout{linuxpp::subprocess::pipe_stream{}},
+                                     linuxpp::subprocess::stderr{linuxpp::subprocess::pipe_stream{}}}};
+
+    {
+        epoll.add(bin.stdout().get(), EPOLLIN);
+        const auto ready_fds = epoll.wait(std::chrono::seconds{5});
+        ASSERT_EQ(1U, ready_fds.size());
+
+        const auto length = linuxpp::read(bin.stdout().get(), stdout_buf.data(), stdout_buf.size());
+        ASSERT_EQ(stdout_value.length(), length);
+    }
+
+    {
+        epoll.del(bin.stdout().get());
+        epoll.add(bin.stderr().get(), EPOLLIN);
+        const auto ready_fds = epoll.wait(std::chrono::seconds{5});
+        ASSERT_EQ(1U, ready_fds.size());
+
+        const auto length = linuxpp::read(bin.stderr().get(), stderr_buf.data(), stderr_buf.size());
+        ASSERT_EQ(stderr_value.length(), length);
+    }
+
+    ASSERT_TRUE(wait_for(bin, std::chrono::seconds{5}));
+
+    const auto status = bin.status();
+    EXPECT_TRUE(static_cast<bool>(status));
+    EXPECT_TRUE(status.exited());
+    EXPECT_TRUE(status.called_exit());
+    EXPECT_FALSE(status.signaled());
+    EXPECT_EQ(0, status.exit_code());
+}
+
+TEST_F(stream_test, stderr_pipe)
+{
+    linuxpp::subprocess::popen bin{{test_path, "--stderr", stderr_value},
+                                   {linuxpp::subprocess::stderr{linuxpp::subprocess::pipe_stream{}}}};
+
+    {
+        epoll.add(bin.stderr().get(), EPOLLIN);
+        const auto ready_fds = epoll.wait(std::chrono::seconds{5});
+        ASSERT_EQ(1U, ready_fds.size());
+
+        const auto length = linuxpp::read(bin.stderr().get(), stderr_buf.data(), stderr_buf.size());
+        ASSERT_EQ(stderr_value.length(), length);
+    }
+
+    ASSERT_TRUE(wait_for(bin, std::chrono::seconds{5}));
+
+    const auto status = bin.status();
+    EXPECT_TRUE(static_cast<bool>(status));
+    EXPECT_TRUE(status.exited());
+    EXPECT_TRUE(status.called_exit());
+    EXPECT_FALSE(status.signaled());
+    EXPECT_EQ(0, status.exit_code());
+}
+
 struct test_settings
 {
     bool run_tests = true;
+    bool check_stdin = false;
+    bool write_stdout = false;
+    bool write_stderr = false;
+    std::string stdin_value = {};
+    std::string stdout_value = {};
+    std::string stderr_value = {};
     int exit_code = 0;
     int wait_for_signal = false;
 };
@@ -179,7 +414,7 @@ int main(int argc, char ** argv)
             }
             else
             {
-                return 1;
+                return 2;
             }
 
             settings.run_tests = false;
@@ -189,6 +424,48 @@ int main(int argc, char ** argv)
         {
             settings.wait_for_signal = true;
             settings.run_tests = false;
+        }
+
+        if (strcmp(argv[i], "--stdin") == 0)
+        {
+            settings.check_stdin = true;
+            settings.run_tests = false;
+            if (argv[i + 1] != nullptr)
+            {
+                settings.stdin_value = argv[i + 1];
+            }
+            else
+            {
+                return 3;
+            }
+        }
+
+        if (strcmp(argv[i], "--stdout") == 0)
+        {
+            settings.write_stdout = true;
+            settings.run_tests = false;
+            if (argv[i + 1] != nullptr)
+            {
+                settings.stdout_value = argv[i + 1];
+            }
+            else
+            {
+                return 4;
+            }
+        }
+
+        if (strcmp(argv[i], "--stderr") == 0)
+        {
+            settings.write_stderr = true;
+            settings.run_tests = false;
+            if (argv[i + 1] != nullptr)
+            {
+                settings.stderr_value = argv[i + 1];
+            }
+            else
+            {
+                return 5;
+            }
         }
     }
 
@@ -203,7 +480,7 @@ int main(int argc, char ** argv)
         if (ret == -1)
         {
             std::cerr << "failed to block SIGCHLD\n";
-            return 1;
+            return 6;
         }
 
         ::testing::InitGoogleTest(&argc, argv);
@@ -213,6 +490,33 @@ int main(int argc, char ** argv)
     if (settings.wait_for_signal)
     {
         ::pause();
+    }
+
+    if (settings.check_stdin)
+    {
+        std::vector<char> stdin_value;
+        stdin_value.resize(settings.stdin_value.length());
+        std::cin.read(stdin_value.data(), stdin_value.size());
+
+        if (std::equal(stdin_value.cbegin(),
+                       stdin_value.cend(),
+                       settings.stdin_value.cbegin(),
+                       settings.stdin_value.cend()) == false)
+        {
+            return 7;
+        }
+    }
+
+    if (settings.write_stdout)
+    {
+        std::cout << settings.stdout_value;
+        std::cout.flush();
+    }
+
+    if (settings.write_stderr)
+    {
+        std::cerr << settings.stderr_value;
+        std::cerr.flush();
     }
 
     return settings.exit_code;

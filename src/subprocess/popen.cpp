@@ -90,9 +90,9 @@ static int clone_handler(void * subprocess_descriptorp)
         if (handle_child_stream(policy.stdin.read_fd(),
                                 policy.stdin.write_fd(),
                                 0,
-                                *policy.child_status))
+                                *policy.child_status) == false)
         {
-            return 1;
+            return 2;
         }
     }
 
@@ -101,9 +101,9 @@ static int clone_handler(void * subprocess_descriptorp)
         if (handle_child_stream(policy.stdout.write_fd(),
                                 policy.stdout.read_fd(),
                                 1,
-                                *policy.child_status))
+                                *policy.child_status) == false)
         {
-            return 1;
+            return 3;
         }
     }
 
@@ -112,9 +112,9 @@ static int clone_handler(void * subprocess_descriptorp)
         if (handle_child_stream(policy.stderr.write_fd(),
                                 policy.stderr.read_fd(),
                                 2,
-                                *policy.child_status))
+                                *policy.child_status) == false)
         {
-            return 1;
+            return 4;
         }
     }
 
@@ -128,7 +128,7 @@ static int clone_handler(void * subprocess_descriptorp)
     if (sigmask_errno != 0)
     {
         policy.child_status->store(sigmask_errno, std::memory_order_release);
-        return 1;
+        return 5;
     }
 
     return policy.exec(policy);
