@@ -356,7 +356,7 @@ linuxpp::subprocess::status linuxpp::subprocess::popen::poll()
     return this->wait(WEXITED | WNOHANG);
 }
 
-void linuxpp::subprocess::popen::signal(const int signal)
+void linuxpp::subprocess::popen::signal(const int signal) const
 {
     if (!std::get<child_pid>(this->members_))
     {
