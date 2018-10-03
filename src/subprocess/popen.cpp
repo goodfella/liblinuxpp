@@ -5,9 +5,10 @@
 #include <cerrno>
 #include <cstdlib>
 
+#include <algorithm>
 #include <atomic>
 #include <exception>
-#include <iostream>
+#include <iterator>
 #include <memory>
 #include <stdexcept>
 #include <system_error>
@@ -25,8 +26,8 @@ std::mutex linuxpp::subprocess::popen::clone_mutex_ {};
 
 struct subprocess_descriptor
 {
-    linuxpp::subprocess::argv const * argv;
-    linuxpp::subprocess::argv const * envp;
+    const std::string& executable;
+    const std::vector<char *>& argv;
     linuxpp::subprocess::stream_descriptors stdin;
     linuxpp::subprocess::stream_descriptors stdout;
     linuxpp::subprocess::stream_descriptors stderr;
@@ -36,9 +37,10 @@ struct subprocess_descriptor
 
 static int popen_execve(const subprocess_descriptor& policy)
 {
-    const int ret = ::execve(policy.argv->executable().c_str(),
-                             policy.argv->data(),
-                             policy.envp->data());
+    std::array <char*, 1> envp {nullptr};
+    const int ret = ::execve(policy.executable.c_str(),
+                             policy.argv.data(),
+                             envp.data());
 
     if (ret == -1)
     {
@@ -154,13 +156,20 @@ static int handle_parent_stream(const int parent_fd,
     }
 }
 
-linuxpp::subprocess::popen::popen(const linuxpp::subprocess::argv& argv,
+linuxpp::subprocess::popen::popen(const std::string& executable,
+                                  const linuxpp::subprocess::argv& argv,
                                   const linuxpp::subprocess::streams& streams)
 {
     constexpr std::size_t stack_size = 1024 * 1024;
     std::unique_ptr<char []> child_stack {new char[stack_size]};
-    linuxpp::subprocess::argv envp;
     std::atomic<int> child_status {0};
+
+    std::vector<char*> cmdline (1U, const_cast<char*>(executable.c_str()));
+    std::transform(argv.cbegin(), argv.cend(), std::back_inserter(cmdline),
+                   [] (const std::unique_ptr<char []>& ptr) {
+                       return ptr.get();
+                   });
+    cmdline.push_back(nullptr);
 
     std::unique_lock<std::mutex> lock(clone_mutex_);
 
@@ -187,8 +196,8 @@ linuxpp::subprocess::popen::popen(const linuxpp::subprocess::argv& argv,
         stderr = streams.error.stream->open();
     }
 
-    subprocess_descriptor descriptor {&argv,
-                                      &envp,
+    subprocess_descriptor descriptor {executable,
+                                      cmdline,
                                       stdin,
                                       stdout,
                                       stderr,

@@ -33,7 +33,8 @@ namespace subprocess
          *  This version spawns the subprocess using the execve system
          *  call.
          */
-        popen(const linuxpp::subprocess::argv& argv,
+        popen(const std::string& executable,
+              const linuxpp::subprocess::argv& argv,
               const linuxpp::subprocess::streams& streams);
 
         ~popen();

@@ -65,7 +65,8 @@ bool wait_for(linuxpp::subprocess::popen & bin, const std::chrono::seconds timeo
 TEST(ctor, bad_executable)
 {
     const auto throws = [] () {
-        linuxpp::subprocess::popen bin{{"/dev/zero"},
+        linuxpp::subprocess::popen bin{"/dev/zero",
+                                       {},
                                        {}};
     };
 
@@ -74,7 +75,7 @@ TEST(ctor, bad_executable)
 
 TEST(member_tests, wait_exit_code_non_zero)
 {
-    linuxpp::subprocess::popen bin{{test_path, "--exit-code", 1},
+    linuxpp::subprocess::popen bin{test_path, {"--exit-code", 1},
                                    {}};
 
     const auto status = bin.wait();
@@ -88,7 +89,7 @@ TEST(member_tests, wait_exit_code_non_zero)
 
 TEST(member_tests, wait_exit_code_zero)
 {
-    linuxpp::subprocess::popen bin{{test_path, "--exit-code", 0},
+    linuxpp::subprocess::popen bin{test_path, {"--exit-code", 0},
                                    {}};
 
     const auto status = bin.wait();
@@ -110,7 +111,7 @@ TEST(member_tests, signal)
     // receive it.
     EXPECT_EQ(0, pthread_sigmask(SIG_BLOCK, &sigset, nullptr));
 
-    linuxpp::subprocess::popen bin{{test_path, "--signal"},
+    linuxpp::subprocess::popen bin{test_path, {"--signal"},
                                    {}};
     bin.signal(SIGUSR1);
     const auto status = bin.wait();
@@ -124,7 +125,7 @@ TEST(member_tests, signal)
 TEST(member_tests, poll_signaled)
 {
     {
-        linuxpp::subprocess::popen bin{{test_path, "--signal"},
+        linuxpp::subprocess::popen bin{test_path, {"--signal"},
                                        {}};
 
         {
@@ -150,7 +151,7 @@ TEST(member_tests, poll_signaled)
 TEST(member_tests, poll_exit_code_zero)
 {
     {
-        linuxpp::subprocess::popen bin{{test_path, "--exit-code", 0},
+        linuxpp::subprocess::popen bin{test_path, {"--exit-code", 0},
                                        {}};
 
         ASSERT_TRUE(wait_for(bin, std::chrono::seconds{5}));
@@ -185,7 +186,7 @@ stream_test::stream_test():
 
 TEST_F(stream_test, stdin_pipe)
 {
-    linuxpp::subprocess::popen bin{{test_path, "--stdin", stdin_value},
+    linuxpp::subprocess::popen bin{test_path, {"--stdin", stdin_value},
                                    {linuxpp::subprocess::stdin{linuxpp::subprocess::pipe_stream{}}}};
 
     {
@@ -205,7 +206,7 @@ TEST_F(stream_test, stdin_pipe)
 
 TEST_F(stream_test, stdin_stdout_pipe)
 {
-    linuxpp::subprocess::popen bin{{test_path, "--stdin", stdin_value, "--stdout", stdout_value},
+    linuxpp::subprocess::popen bin{test_path, {"--stdin", stdin_value, "--stdout", stdout_value},
                                    {linuxpp::subprocess::stdin{linuxpp::subprocess::pipe_stream{}},
                                     linuxpp::subprocess::stdout{linuxpp::subprocess::pipe_stream{}}}};
 
@@ -235,7 +236,7 @@ TEST_F(stream_test, stdin_stdout_pipe)
 
 TEST_F(stream_test, stdin_stderr_pipe)
 {
-    linuxpp::subprocess::popen bin{{test_path, "--stdin", stdin_value, "--stderr", stderr_value},
+    linuxpp::subprocess::popen bin{test_path, {"--stdin", stdin_value, "--stderr", stderr_value},
                                    {linuxpp::subprocess::stdin{linuxpp::subprocess::pipe_stream{}},
                                     linuxpp::subprocess::stderr{linuxpp::subprocess::pipe_stream{}}}};
 
@@ -265,7 +266,7 @@ TEST_F(stream_test, stdin_stderr_pipe)
 
 TEST_F(stream_test, stdin_stdout_stderr_pipe)
 {
-    linuxpp::subprocess::popen bin{{test_path, "--stdin", stdin_value, "--stdout", stdout_value, "--stderr", stderr_value},
+    linuxpp::subprocess::popen bin{test_path, {"--stdin", stdin_value, "--stdout", stdout_value, "--stderr", stderr_value},
                                    {linuxpp::subprocess::stdin{linuxpp::subprocess::pipe_stream{}},
                                     linuxpp::subprocess::stdout{linuxpp::subprocess::pipe_stream{}},
                                     linuxpp::subprocess::stderr{linuxpp::subprocess::pipe_stream{}}}};
@@ -306,7 +307,7 @@ TEST_F(stream_test, stdin_stdout_stderr_pipe)
 
 TEST_F(stream_test, stdout_pipe)
 {
-    linuxpp::subprocess::popen bin{{test_path, "--stdout", stdout_value},
+    linuxpp::subprocess::popen bin{test_path, {"--stdout", stdout_value},
                                    {linuxpp::subprocess::stdout{linuxpp::subprocess::pipe_stream{}}}};
 
     {
@@ -330,7 +331,7 @@ TEST_F(stream_test, stdout_pipe)
 
 TEST_F(stream_test, stdout_stderr_pipe)
 {
-    linuxpp::subprocess::popen bin{{test_path, "--stdout", stdout_value, "--stderr", stderr_value},
+    linuxpp::subprocess::popen bin{test_path, {"--stdout", stdout_value, "--stderr", stderr_value},
                                     {linuxpp::subprocess::stdout{linuxpp::subprocess::pipe_stream{}},
                                      linuxpp::subprocess::stderr{linuxpp::subprocess::pipe_stream{}}}};
 
@@ -365,7 +366,7 @@ TEST_F(stream_test, stdout_stderr_pipe)
 
 TEST_F(stream_test, stderr_pipe)
 {
-    linuxpp::subprocess::popen bin{{test_path, "--stderr", stderr_value},
+    linuxpp::subprocess::popen bin{test_path, {"--stderr", stderr_value},
                                    {linuxpp::subprocess::stderr{linuxpp::subprocess::pipe_stream{}}}};
 
     {
