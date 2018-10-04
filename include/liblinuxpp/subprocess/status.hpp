@@ -23,6 +23,12 @@ namespace subprocess
         explicit
         status(const siginfo_t siginfo);
 
+        status(const status & other) = default;
+        status & operator=(const status& rhs) = default;
+
+        status(status&& other) noexcept;
+        status & operator= (status&& rhs) noexcept;
+
         /// Returns true if the subprocess has exited, false otherwise
         explicit operator bool() const noexcept;
 
@@ -73,6 +79,31 @@ namespace subprocess
         bool signaled_ = false;
         bool dumped_ = false;
     };
+
+    inline status::status(status&& other) noexcept:
+        exit_code_raw_(other.exit_code_raw_),
+        exited_(other.exited_),
+        called_exit_(other.called_exit_),
+        signaled_(other.signaled_),
+        dumped_(other.dumped_)
+    {
+        const status temp;
+        other = temp;
+    }
+
+    inline status & status::operator=(status&& rhs) noexcept
+    {
+        if (&rhs == this)
+        {
+            return *this;
+        }
+
+        *this = rhs;
+        const status temp;
+        rhs = temp;
+
+        return *this;
+    }
 }
 }
 
