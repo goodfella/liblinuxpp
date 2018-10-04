@@ -208,7 +208,6 @@ linuxpp::subprocess::popen::popen(const std::string& executable,
                             child_stack.get() + (stack_size - 1),
                             CLONE_VM | CLONE_VFORK | SIGCHLD,
                             &descriptor);
-    lock.unlock();
 
     if (ret == -1)
     {
@@ -260,6 +259,8 @@ linuxpp::subprocess::popen::popen(const std::string& executable,
         std::get<stderr_stream>(this->members_).reset(handle_parent_stream(stderr.read_fd(),
                                                                            stderr.write_fd()));
     }
+
+    lock.unlock();
 
     std::get<child_pid>(this->members_).reset(ret);
 
