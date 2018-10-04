@@ -19,6 +19,8 @@ namespace linuxpp
      */
     class epoll
     {
+        public:
+
         /// Constructs an epoll object using EPOLL_CLOEXEC
         epoll();
 
