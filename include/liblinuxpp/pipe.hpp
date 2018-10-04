@@ -10,39 +10,65 @@
 #include <system_error>
 
 #include "unique_fd.hpp"
-
+#include "no_cloexec.hpp"
 #include <libndgpp/source_location.hpp>
 #include <libndgpp/error.hpp>
 
 namespace linuxpp
 {
-    /** Returns a Linux pipe array
+    /** Returns a Linux pipe array with the O_CLOEXEC flag set
      *
-     *  @param flags The flags to pass to the pipe2 system call
+     *  @param flags The flags to pass to the pipe2 system call.
+     *               O_CLOEXEC is bitwise or'd to this parameter.
      *
      *  @return A std::array<int, 2> with the same semantics as the
      *          int array returned from pipe2
      *
      *  @throw std::exception if an error is encountered
      */
-    std::array<int, 2> pipe_fd(int flags = O_CLOEXEC);
+    std::array<int, 2> pipe_fd(int flags);
 
     /** Returns a Linux pipe array
      *
-     *  @param flags The flags to pass to the pipe2 system call
+     *  @param flags The flags to pass to the pipe2 system call.
+     *
+     *  @return A std::array<int, 2> with the same semantics as the
+     *          int array returned from pipe2
+     *
+     *  @throw std::exception if an error is encountered
+     */
+    std::array<int, 2> pipe_fd(int flags, linuxpp::no_cloexec_t);
+
+
+    /** Returns a Linux pipe array with the O_CLOEXEC flag set
+     *
+     *  @param flags The flags to pass to the pipe2 system call.
+     *               O_CLOEXEC is bitwised or'd to to this parameter.
      *
      *  @return A std::array<linuxpp::unique_fd<>, 2>
      *
      *  @throw std::exception if an error is encountered
      */
-    std::array<unique_fd<>, 2> pipe_unique_fd(int flags = O_CLOEXEC);
+    std::array<unique_fd<>, 2> pipe_unique_fd(int flags);
+
+    /** Returns a Linux pipe array
+     *
+     *  @param flags The flags to pass to the pipe2 system call.
+     *
+     *  @return A std::array<linuxpp::unique_fd<>, 2>
+     *
+     *  @throw std::exception if an error is encountered
+     */
+    std::array<unique_fd<>, 2> pipe_unique_fd(int flags, linuxpp::no_cloexec_t);
 
     /// Represents a Linux pipe
     class pipe
     {
         public:
 
-        pipe(const int flags = O_CLOEXEC);
+        pipe(const int flags = 0);
+        pipe(const int flags, linuxpp::no_cloexec_t);
+
         ~pipe() = default;
 
         pipe(const pipe&) = delete;

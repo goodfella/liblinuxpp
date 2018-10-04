@@ -12,7 +12,7 @@
 #include <libndgpp/source_location.hpp>
 #include <libndgpp/error.hpp>
 
-std::array<int, 2> linuxpp::pipe_fd(const int flags)
+std::array<int, 2> linuxpp::pipe_fd(const int flags, linuxpp::no_cloexec_t)
 {
     std::array<int, 2> pipeFds = {};
     const int ret = ::pipe2(pipeFds.data(), flags);
@@ -27,14 +27,28 @@ std::array<int, 2> linuxpp::pipe_fd(const int flags)
     return pipeFds;
 }
 
+std::array<int, 2> linuxpp::pipe_fd(const int flags)
+{
+    return linuxpp::pipe_fd(flags | O_CLOEXEC, linuxpp::no_cloexec);
+}
+
+std::array<linuxpp::unique_fd<>, 2> linuxpp::pipe_unique_fd(const int flags, linuxpp::no_cloexec_t)
+{
+    const std::array<int, 2> pipeFds = linuxpp::pipe_fd(flags, linuxpp::no_cloexec);
+    return std::array<linuxpp::unique_fd<>, 2>{pipeFds[0], pipeFds[1]};
+}
+
 std::array<linuxpp::unique_fd<>, 2> linuxpp::pipe_unique_fd(const int flags)
 {
-    const std::array<int, 2> pipeFds = linuxpp::pipe_fd(flags);
-    return std::array<linuxpp::unique_fd<>, 2>{pipeFds[0], pipeFds[1]};
+    return linuxpp::pipe_unique_fd(flags | O_CLOEXEC, linuxpp::no_cloexec);
 }
 
 linuxpp::pipe::pipe(const int flags):
     members_{linuxpp::pipe_unique_fd(flags)}
+{}
+
+linuxpp::pipe::pipe(const int flags, linuxpp::no_cloexec_t):
+    members_{linuxpp::pipe_unique_fd(flags, linuxpp::no_cloexec)}
 {}
 
 std::size_t linuxpp::pipe::write(void const * const buf, const std::size_t size, int& errno_val) noexcept

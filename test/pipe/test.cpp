@@ -25,6 +25,20 @@ TEST(ctor, non_default)
     linuxpp::pipe pipe(0);
     {
         const int ret = linuxpp::fcntl(pipe.read_fd().get(), F_GETFD);
+        EXPECT_EQ(ret, FD_CLOEXEC);
+    }
+
+    {
+        const int ret = linuxpp::fcntl(pipe.write_fd().get(), F_GETFD);
+        EXPECT_EQ(ret, FD_CLOEXEC);
+    }
+}
+
+TEST(ctor, no_cloexec)
+{
+    linuxpp::pipe pipe(0, linuxpp::no_cloexec);
+    {
+        const int ret = linuxpp::fcntl(pipe.read_fd().get(), F_GETFD);
         EXPECT_NE(ret, FD_CLOEXEC);
     }
 
