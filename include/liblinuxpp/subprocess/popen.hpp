@@ -24,7 +24,7 @@ namespace subprocess
      *
      *  @par Copy Semantics Non-copyable
      */
-    class popen
+    class popen final
     {
         public:
 

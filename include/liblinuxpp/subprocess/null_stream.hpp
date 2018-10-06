@@ -8,7 +8,7 @@ namespace linuxpp
 namespace subprocess
 {
     /// A process stream that is associated with /dev/null
-    class null_stream: public linuxpp::subprocess::path_stream
+    class null_stream final: public linuxpp::subprocess::path_stream
     {
         public:
 
@@ -18,7 +18,7 @@ namespace subprocess
 
         private:
 
-        stream_descriptors open() const override;
+        stream_descriptors open() const final override;
     };
 }
 }
