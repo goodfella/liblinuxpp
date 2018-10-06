@@ -8,7 +8,6 @@ namespace linuxpp
 {
 namespace subprocess
 {
-    class popen;
     class stream_descriptors;
 
     /// Base class that represents a standard stream for a process

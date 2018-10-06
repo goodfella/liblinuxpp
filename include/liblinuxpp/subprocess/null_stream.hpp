@@ -1,7 +1,7 @@
 #ifndef LIBLINUXPP_SUBPROCESS_NULL_STREAM_HPP
 #define LIBLINUXPP_SUBPROCESS_NULL_STREAM_HPP
 
-#include "path_stream.hpp"
+#include <liblinuxpp/subprocess/path_stream.hpp>
 
 namespace linuxpp
 {

@@ -11,6 +11,7 @@
 #include <liblinuxpp/subprocess/path_stream.hpp>
 #include <liblinuxpp/subprocess/pipe_stream.hpp>
 #include <liblinuxpp/subprocess/null_stream.hpp>
+#include <liblinuxpp/subprocess/fd_stream.hpp>
 #include <liblinuxpp/subprocess/argv.hpp>
 #include <liblinuxpp/subprocess/status.hpp>
 #include <liblinuxpp/pid.hpp>
