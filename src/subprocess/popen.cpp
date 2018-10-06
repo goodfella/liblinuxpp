@@ -156,6 +156,11 @@ static int handle_parent_stream(const int parent_fd,
     }
 }
 
+linuxpp::subprocess::popen::popen(popen&&) noexcept = default;
+
+linuxpp::subprocess::popen &
+linuxpp::subprocess::popen::operator=(popen&&) noexcept = default;
+
 linuxpp::subprocess::popen::popen(const std::string& executable,
                                   const linuxpp::subprocess::argv& argv,
                                   const linuxpp::subprocess::streams& streams)

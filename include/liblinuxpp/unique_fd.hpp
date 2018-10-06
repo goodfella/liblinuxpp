@@ -77,8 +77,8 @@ namespace linuxpp
         unique_fd(const unique_fd&) = delete;
         unique_fd& operator= (const unique_fd&) = delete;
 
-        unique_fd(unique_fd&& src) = default;
-        unique_fd& operator= (unique_fd&& src) = default;
+        unique_fd(unique_fd&& src) noexcept;
+        unique_fd& operator= (unique_fd&& src) noexcept;
 
         /** Releases ownership of the file descriptor
          *
@@ -116,6 +116,12 @@ namespace linuxpp
         using tuple_type = std::tuple<linuxpp::file_descriptor, closer_type>;
         tuple_type members_;
     };
+
+    template <class Closer>
+    unique_fd<Closer>::unique_fd(unique_fd&& src) noexcept = default;
+
+    template <class Closer>
+    unique_fd<Closer> & unique_fd<Closer>::operator=(unique_fd&& src) noexcept = default;
 
     template <class Closer>
     inline unique_fd<Closer>::~unique_fd()

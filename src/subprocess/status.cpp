@@ -22,6 +22,32 @@ linuxpp::subprocess::status::status(const siginfo_t siginfo)
         this->dumped_;
 }
 
+linuxpp::subprocess::status::status(status&& other) noexcept:
+    exit_code_raw_(other.exit_code_raw_),
+    exited_(other.exited_),
+    called_exit_(other.called_exit_),
+    signaled_(other.signaled_),
+    dumped_(other.dumped_)
+{
+    const status temp;
+    other = temp;
+}
+
+linuxpp::subprocess::status &
+linuxpp::subprocess::status::operator=(status&& rhs) noexcept
+{
+    if (&rhs == this)
+    {
+        return *this;
+    }
+
+    *this = rhs;
+    const status temp;
+    rhs = temp;
+
+    return *this;
+}
+
 linuxpp::subprocess::status::operator bool() const noexcept
 {
     return this->exited();

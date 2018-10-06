@@ -42,6 +42,9 @@ namespace subprocess
         popen(const popen&) = delete;
         popen& operator=(const popen&) = delete;
 
+        popen(popen&&) noexcept;
+        popen& operator= (popen&&) noexcept;
+
         /** Blocks until the subprocess exits
          *
          *  @throws ndgpp::error<std::system_error> on error

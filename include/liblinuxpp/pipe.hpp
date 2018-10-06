@@ -74,8 +74,8 @@ namespace linuxpp
         pipe(const pipe&) = delete;
         pipe& operator=(const pipe&) = delete;
 
-        pipe(pipe&& other) = default;
-        pipe& operator=(pipe&& other) = default;
+        pipe(pipe&& other) noexcept;
+        pipe& operator=(pipe&& other) noexcept;
 
         void swap(pipe& other) noexcept;
 

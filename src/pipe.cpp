@@ -51,6 +51,11 @@ linuxpp::pipe::pipe(const int flags, linuxpp::no_cloexec_t):
     members_{linuxpp::pipe_unique_fd(flags, linuxpp::no_cloexec)}
 {}
 
+linuxpp::pipe::pipe(pipe&&) noexcept = default;
+
+linuxpp::pipe&
+linuxpp::pipe::operator=(pipe&&) noexcept = default;
+
 std::size_t linuxpp::pipe::write(void const * const buf, const std::size_t size, int& errno_val) noexcept
 {
     const ssize_t ret = ::write(this->write_fd().get(), buf, size);
