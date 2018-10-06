@@ -33,6 +33,10 @@ namespace subprocess
          *
          *  This version spawns the subprocess using the execve system
          *  call.
+         *
+         *  @param executable The path to the executable
+         *  @param argv The command line parameters to pass to the executable
+         *  @param streams The stdin, stdout, and stderr stream definitions
          */
         popen(const std::string& executable,
               const linuxpp::subprocess::argv& argv,

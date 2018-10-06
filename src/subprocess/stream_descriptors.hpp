@@ -8,9 +8,7 @@ namespace linuxpp
 {
 namespace subprocess
 {
-    class popen;
-
-    /// Class that contains a streams read and write descriptors
+    /// Class that contains a stream's read and write descriptors
     class stream_descriptors
     {
         public:
