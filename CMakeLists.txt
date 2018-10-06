@@ -11,6 +11,7 @@ add_library(linuxpp SHARED
   src/subprocess/pipe_stream.cpp
   src/subprocess/path_stream.cpp
   src/subprocess/null_stream.cpp
+  src/subprocess/fd_stream.cpp
   src/subprocess/stream_descriptors.cpp
   src/subprocess/argv.cpp
   src/subprocess/popen.cpp)
