@@ -19,6 +19,7 @@
 #include <liblinuxpp/read.hpp>
 #include <liblinuxpp/subprocess/popen.hpp>
 #include <liblinuxpp/write.hpp>
+#include <liblinuxpp/pipe.hpp>
 
 std::string test_path;
 
@@ -386,6 +387,59 @@ TEST_F(stream_test, stderr_pipe)
     EXPECT_TRUE(status.called_exit());
     EXPECT_FALSE(status.signaled());
     EXPECT_EQ(0, status.exit_code());
+}
+
+class bad_stream_test: public ::testing::Test
+{
+    protected:
+
+    bad_stream_test();
+    linuxpp::pipe pipe;
+    int closed_fd;
+};
+
+bad_stream_test::bad_stream_test():
+    closed_fd(pipe.write_fd().get())
+{
+    const int ret = ::close(pipe.write_fd().get());
+    if (ret == -1)
+    {
+        throw std::runtime_error("failed to close file descriptor in bad_stream_test ctor");
+    }
+}
+
+TEST_F(bad_stream_test, stdin_bad_read_fd)
+{
+    const auto throws = [this] () {
+        linuxpp::subprocess::popen bin{"/dev/zero",
+                                       {},
+                                       {linuxpp::subprocess::stdin{linuxpp::subprocess::fd_stream{closed_fd}}}};
+    };
+
+    EXPECT_THROW(throws(), ndgpp::error<std::system_error>);
+}
+
+
+TEST_F(bad_stream_test, stdout_bad_write_fd)
+{
+    const auto throws = [this] () {
+        linuxpp::subprocess::popen bin{test_path,
+                                       {"--exit-code", 0},
+                                       {linuxpp::subprocess::stdout{linuxpp::subprocess::fd_stream{closed_fd}}}};
+    };
+
+    EXPECT_THROW(throws(), ndgpp::error<std::system_error>);
+}
+
+TEST_F(bad_stream_test, stderr_bad_write_fd)
+{
+    const auto throws = [this] () {
+        linuxpp::subprocess::popen bin{test_path,
+                                       {"--exit-code", 0},
+                                       {linuxpp::subprocess::stderr{linuxpp::subprocess::fd_stream{closed_fd}}}};
+    };
+
+    EXPECT_THROW(throws(), ndgpp::error<std::system_error>);
 }
 
 struct test_settings
