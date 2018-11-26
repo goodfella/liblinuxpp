@@ -122,6 +122,9 @@ namespace linuxpp
         void wait(std::vector<epoll_event>& events,
                   const std::chrono::milliseconds timeout);
 
+        /// Swaps this with the provided epoll object
+        void swap(linuxpp::epoll& other);
+
         private:
 
         void add(const int fd, epoll_event event);

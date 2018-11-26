@@ -125,6 +125,11 @@ std::vector<epoll_event> linuxpp::epoll::wait(const std::chrono::milliseconds ti
     return events;
 }
 
+void linuxpp::epoll::swap(linuxpp::epoll& other)
+{
+    std::swap(this->members_, other.members_);
+}
+
 void linuxpp::epoll::add(const int fd, epoll_event event)
 {
     const int ret = ::epoll_ctl(std::get<epoll_fd>(this->members_).get(),
