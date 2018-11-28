@@ -125,7 +125,7 @@ std::vector<epoll_event> linuxpp::epoll::wait(const std::chrono::milliseconds ti
     return events;
 }
 
-void linuxpp::epoll::swap(linuxpp::epoll& other)
+void linuxpp::epoll::swap(linuxpp::epoll& other) noexcept
 {
     std::swap(this->members_, other.members_);
 }

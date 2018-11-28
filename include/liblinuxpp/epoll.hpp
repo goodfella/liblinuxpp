@@ -123,7 +123,7 @@ namespace linuxpp
                   const std::chrono::milliseconds timeout);
 
         /// Swaps this with the provided epoll object
-        void swap(linuxpp::epoll& other);
+        void swap(linuxpp::epoll& other) noexcept;
 
         private:
 
