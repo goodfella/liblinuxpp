@@ -38,6 +38,7 @@ namespace subprocess
          *  @param argv The command line parameters to pass to the executable
          *  @param streams The stdin, stdout, and stderr stream definitions
          */
+        explicit
         popen(const std::string& executable,
               const linuxpp::subprocess::argv& argv,
               const linuxpp::subprocess::streams& streams);
