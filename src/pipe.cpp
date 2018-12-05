@@ -35,7 +35,8 @@ std::array<int, 2> linuxpp::pipe_fd(const int flags)
 std::array<linuxpp::unique_fd<>, 2> linuxpp::pipe_unique_fd(const int flags, linuxpp::no_cloexec_t)
 {
     const std::array<int, 2> pipeFds = linuxpp::pipe_fd(flags, linuxpp::no_cloexec);
-    return std::array<linuxpp::unique_fd<>, 2>{pipeFds[0], pipeFds[1]};
+    return std::array<linuxpp::unique_fd<>, 2>{linuxpp::unique_fd<>{pipeFds[0]},
+                                               linuxpp::unique_fd<>{pipeFds[1]}};
 }
 
 std::array<linuxpp::unique_fd<>, 2> linuxpp::pipe_unique_fd(const int flags)

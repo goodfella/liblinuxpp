@@ -37,7 +37,7 @@ inline epoll_event make_epoll_event(const int fd, const uint32_t events, const u
 }
 
 linuxpp::epoll::epoll():
-    members_(::epoll_create1(EPOLL_CLOEXEC), 0)
+    members_(linuxpp::unique_fd<>{::epoll_create1(EPOLL_CLOEXEC)}, 0)
 {
     if (!std::get<epoll_fd>(this->members_))
     {

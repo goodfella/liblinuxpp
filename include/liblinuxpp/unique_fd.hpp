@@ -41,6 +41,7 @@ namespace linuxpp
          *
          *  @param fd The file descriptor to manage
          */
+        explicit
         unique_fd(const int fd) noexcept:
             members_(fd,
                      closer_type())
