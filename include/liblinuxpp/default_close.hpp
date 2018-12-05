@@ -7,10 +7,12 @@ namespace linuxpp
 {
     struct default_close
     {
-	constexpr default_close() noexcept = default;
+	constexpr default_close() noexcept;
 
 	void operator()(const int fd) const noexcept;
     };
+
+    constexpr default_close::default_close() noexcept = default;
 
     inline void default_close::operator()(const int fd) const noexcept
     {
