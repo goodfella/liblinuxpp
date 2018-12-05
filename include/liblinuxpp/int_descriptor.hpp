@@ -29,6 +29,7 @@ namespace linuxpp
 
         constexpr int_descriptor() noexcept;
 
+        explicit
         constexpr int_descriptor(const T invalid_value) noexcept;
 
         int_descriptor(const int_descriptor&) noexcept;

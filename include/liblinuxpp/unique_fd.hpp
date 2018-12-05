@@ -32,9 +32,7 @@ namespace linuxpp
          *  The internal file descriptor will be set to
          *  linuxpp::closed_fd
          */
-        constexpr unique_fd() noexcept:
-            members_(linuxpp::closed_fd,
-                     closer_type())
+        constexpr unique_fd() noexcept
         {}
 
         /** Constructs a unique_fd that manages the given file descriptor
@@ -43,7 +41,7 @@ namespace linuxpp
          */
         explicit
         unique_fd(const int fd) noexcept:
-            members_(fd,
+            members_(linuxpp::file_descriptor{fd},
                      closer_type())
             {}
 
@@ -56,7 +54,7 @@ namespace linuxpp
         unique_fd(const int fd,
                   typename std::conditional<std::is_reference<closer_type>::value,
                   closer_type, const closer_type&>::type closer) noexcept:
-            members_(fd,
+            members_(linuxpp::file_descriptor{fd},
                      closer)
             {}
 
@@ -68,7 +66,7 @@ namespace linuxpp
          */
         unique_fd(const int fd,
                   typename std::remove_reference<closer_type>::type&& closer) noexcept:
-            members_(fd,
+            members_(linuxpp::file_descriptor{fd},
                      std::move(closer))
             {}
 
@@ -151,9 +149,7 @@ namespace linuxpp
     template <class Closer>
     inline int unique_fd<Closer>::release() noexcept
     {
-        const int fd = this->get();
-        std::get<fd_member>(members_) = linuxpp::closed_fd;
-        return fd;
+        return std::get<fd_member>(members_).release();
     }
 
     template <class Closer>
