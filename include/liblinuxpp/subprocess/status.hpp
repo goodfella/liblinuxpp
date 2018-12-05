@@ -13,7 +13,7 @@ namespace subprocess
     {
         public:
 
-        constexpr status() = default;
+        constexpr status() noexcept;
 
         /** Constructs a status object
          *
@@ -23,8 +23,8 @@ namespace subprocess
         explicit
         status(const siginfo_t siginfo);
 
-        status(const status & other) = default;
-        status & operator=(const status& rhs) = default;
+        status(const status & other) noexcept;
+        status & operator=(const status& rhs) noexcept;
 
         status(status&& other) noexcept;
         status & operator= (status&& rhs) noexcept;
@@ -79,6 +79,8 @@ namespace subprocess
         bool signaled_ = false;
         bool dumped_ = false;
     };
+
+    constexpr status::status() noexcept = default;
 }
 }
 

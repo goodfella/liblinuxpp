@@ -22,6 +22,11 @@ linuxpp::subprocess::status::status(const siginfo_t siginfo)
         this->dumped_;
 }
 
+linuxpp::subprocess::status::status(const status&) noexcept = default;
+
+linuxpp::subprocess::status &
+linuxpp::subprocess::status::operator= (const status&) noexcept = default;
+
 linuxpp::subprocess::status::status(status&& other) noexcept:
     exit_code_raw_(other.exit_code_raw_),
     exited_(other.exited_),
