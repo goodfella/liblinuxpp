@@ -66,7 +66,10 @@ namespace linuxpp
     {
         public:
 
+        explicit
         pipe(const int flags = 0);
+
+        explicit
         pipe(const int flags, linuxpp::no_cloexec_t);
 
         ~pipe() = default;
