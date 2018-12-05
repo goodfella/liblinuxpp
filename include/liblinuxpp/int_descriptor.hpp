@@ -27,10 +27,12 @@ namespace linuxpp
                                                int_descriptor_default_traits>;
         using value_type = T;
 
-        constexpr int_descriptor(const T descriptor = type_traits::invalid_value) noexcept;
+        constexpr int_descriptor() noexcept;
 
-        int_descriptor(const int_descriptor&) = default;
-        int_descriptor& operator=(const int_descriptor&) = default;
+        constexpr int_descriptor(const T invalid_value) noexcept;
+
+        int_descriptor(const int_descriptor&) noexcept;
+        int_descriptor& operator=(const int_descriptor&) noexcept;
 
         int_descriptor(int_descriptor&&) noexcept;
         int_descriptor& operator=(int_descriptor&&) noexcept;
@@ -47,8 +49,17 @@ namespace linuxpp
 
         private:
 
-        int descriptor_;
+        T descriptor_ = type_traits::invalid_value;
     };
+
+    template <class Tag, class T>
+    constexpr int_descriptor<Tag, T>::int_descriptor() noexcept = default;
+
+    template <class Tag, class T>
+    int_descriptor<Tag, T>::int_descriptor(const int_descriptor&) noexcept = default;
+
+    template <class Tag, class T>
+    int_descriptor<Tag, T>& int_descriptor<Tag, T>::operator=(const int_descriptor&) noexcept = default;
 
     template <class Tag, class T>
     inline void swap(int_descriptor<Tag, T>& lhs, int_descriptor<Tag, T>& rhs) noexcept
