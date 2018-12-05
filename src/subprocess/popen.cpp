@@ -342,7 +342,7 @@ linuxpp::subprocess::popen::~popen()
 linuxpp::subprocess::status
 linuxpp::subprocess::popen::wait(const int options)
 {
-    if (!std::get<child_pid>(this->members_).get())
+    if (!std::get<child_pid>(this->members_))
     {
         /// subprocess has already been waited on
         return std::get<child_status>(this->members_);
