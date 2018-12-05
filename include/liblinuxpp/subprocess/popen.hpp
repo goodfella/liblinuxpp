@@ -78,7 +78,7 @@ namespace subprocess
          *          ndgpp::error<std::logic_error> if the popen object
          *          is no longer associated with a running subprocess
          */
-        void signal(const int signal) const;
+        void signal(const int signal);
 
         linuxpp::unique_fd<>& stdin() noexcept;
         linuxpp::unique_fd<>& stdout() noexcept;
