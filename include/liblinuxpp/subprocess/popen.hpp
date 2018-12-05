@@ -43,6 +43,8 @@ namespace subprocess
               const linuxpp::subprocess::argv& argv,
               const linuxpp::subprocess::streams& streams);
 
+        popen() noexcept;
+
         ~popen();
 
         popen(const popen&) = delete;
