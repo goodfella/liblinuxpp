@@ -117,7 +117,7 @@ namespace subprocess
                                       linuxpp::unique_fd<>,
                                       linuxpp::unique_fd<>,
                                       linuxpp::subprocess::status>;
-        tuple_type members_;
+        tuple_type members_ = {};
 
         static std::mutex clone_mutex_;
     };
