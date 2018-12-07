@@ -77,7 +77,7 @@ void check_move(linuxpp::unique_fd<C>& dst, const linuxpp::unique_fd<C>& src, in
 
 TEST(type, size)
 {
-    EXPECT_EQ(sizeof(linuxpp::unique_fd<>), sizeof(int));
+    EXPECT_EQ(sizeof(int), sizeof(linuxpp::unique_fd<>));
 }
 
 TEST(ctor, default)
