@@ -74,6 +74,35 @@ TEST(ctor, bad_executable)
     EXPECT_THROW(throws(), ndgpp::error<std::system_error>);
 }
 
+TEST(ctor, default_ctor)
+{
+    linuxpp::subprocess::popen p{};
+
+    EXPECT_FALSE(p.pid());
+    EXPECT_FALSE(p);
+}
+
+TEST(vector_support, default_ctor)
+{
+    std::vector<linuxpp::subprocess::popen> processes(5U);
+    ASSERT_EQ(5U, processes.size());
+
+    for (std::size_t i = 0; i < processes.size(); ++i)
+    {
+        processes[i] = linuxpp::subprocess::popen(test_path, {"--exit-code", i}, {});
+    }
+
+    for (std::size_t i = 0; i < processes.size(); ++i)
+    {
+        linuxpp::subprocess::popen & proc = processes[i];
+        ASSERT_TRUE(proc);
+
+        const auto status = proc.wait();
+        EXPECT_EQ(static_cast<int>(i), status.exit_code());
+        EXPECT_FALSE(proc);
+    }
+}
+
 TEST(member_tests, wait_exit_code_non_zero)
 {
     linuxpp::subprocess::popen bin{test_path, {"--exit-code", 1},

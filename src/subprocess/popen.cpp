@@ -429,3 +429,8 @@ const linuxpp::unique_fd<> & linuxpp::subprocess::popen::stderr() const noexcept
 {
     return std::get<stderr_stream>(this->members_);
 }
+
+linuxpp::subprocess::popen::operator bool() const noexcept
+{
+    return static_cast<bool>(std::get<child_pid>(this->members_));
+}

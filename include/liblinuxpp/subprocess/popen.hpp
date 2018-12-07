@@ -5,6 +5,7 @@
 
 #include <mutex>
 #include <tuple>
+#include <utility>
 
 #include <liblinuxpp/subprocess/stream.hpp>
 #include <liblinuxpp/subprocess/streams.hpp>
@@ -55,6 +56,9 @@ namespace subprocess
 
         /** Blocks until the subprocess exits
          *
+         *  @note Once this function returns, the underlying
+         *        linuxpp::pid object is set to linuxpp::invalid_pid
+         *
          *  @throws ndgpp::error<std::system_error> on error
          */
         linuxpp::subprocess::status wait();
@@ -94,10 +98,18 @@ namespace subprocess
          *        linuxpp::subprocess::popen::poll returns a status
          *        object that represents an exited subprocess, this
          *        function returns a linuxpp::pid assigned to
-         *        linuxp::invalid_pid.
+         *        linuxpp::invalid_pid.
          */
         linuxpp::pid pid() const noexcept;
+
+        /// Returns the underlying linuxpp::subprocess::status
         linuxpp::subprocess::status status() const noexcept;
+
+        /// Swaps this with other
+        void swap(popen & other) noexcept;
+
+        /// Returns true if pid() is not equal to linuxpp::invalid_pid
+        explicit operator bool() const noexcept;
 
         private:
 
@@ -121,6 +133,16 @@ namespace subprocess
 
         static std::mutex clone_mutex_;
     };
+
+    inline void popen::swap(popen & other) noexcept
+    {
+        std::swap(this->members_, other.members_);
+    }
+
+    inline void swap(popen & lhs, popen & rhs) noexcept
+    {
+        lhs.swap(rhs);
+    }
 }
 }
 
