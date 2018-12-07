@@ -62,7 +62,7 @@ namespace linuxpp
     std::array<unique_fd<>, 2> pipe_unique_fd(int flags, linuxpp::no_cloexec_t);
 
     /// Represents a Linux pipe
-    class pipe
+    class pipe final
     {
         public:
 

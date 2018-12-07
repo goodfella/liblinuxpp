@@ -18,7 +18,7 @@ namespace linuxpp
 
     /// Represents an integer based descriptor
     template <class Tag, class T = int>
-    class int_descriptor
+    class int_descriptor final
     {
         public:
 

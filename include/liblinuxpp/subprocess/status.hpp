@@ -9,7 +9,7 @@ namespace linuxpp
 namespace subprocess
 {
     /// Represents the status of a subprocess
-    class status
+    class status final
     {
         public:
 

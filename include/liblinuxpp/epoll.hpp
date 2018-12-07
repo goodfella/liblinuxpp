@@ -17,7 +17,7 @@ namespace linuxpp
      *
      *  @par Copy Semantics Non-copyable
      */
-    class epoll
+    class epoll final
     {
         public:
 

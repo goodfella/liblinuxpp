@@ -12,7 +12,7 @@ namespace linuxpp
 {
 namespace subprocess
 {
-    class argv
+    class argv final
     {
         public:
 
