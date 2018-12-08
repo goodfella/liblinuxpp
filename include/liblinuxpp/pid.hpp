@@ -22,6 +22,9 @@ namespace linuxpp
     };
 
     using pid = int_descriptor<detail::pid_tag, pid_t>;
+
+    static_assert(std::is_same<int_descriptor_traits<detail::pid_tag>, typename pid::type_traits>::value,
+                  "pid::type_traits is incorrect");
 }
 
 #endif

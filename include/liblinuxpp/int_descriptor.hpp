@@ -8,29 +8,56 @@
 
 namespace linuxpp
 {
-    template <class Tag, class T = int>
+    /** A class that defines traits associated with an int_descriptor Tag
+     *
+     *  A specialization of this class should be defined if any of the
+     *  following statements are true:
+     *
+     *  1. The int_descriptor's integer type is not an int
+     *  2. The invalid value is not equal to -1
+     *
+     *  A specialization of this class shall contain the following:
+     *
+     * - A static constexpr member variable named 'invalid_value'
+     *   whose type is the int_descriptor's integer type and whose
+     *   value is equal the "invalid value" for the int_descriptor Tag
+     *
+     *  The specialization shall be defined in the linuxpp namespace
+     */
+    template <class Tag>
     struct int_descriptor_traits;
 
+    /// The int_descriptor_traits type to use when a specialization
+    /// for the int_descriptor_traits class does not exist
     struct int_descriptor_default_traits
     {
         static constexpr int invalid_value = -1;
     };
 
-    /// Represents an integer based descriptor
+    /** Represents an integer based descriptor
+     *
+     *  @tparam Tag A type used to differentiate int_descriptors with the same integer type
+     *  @tparam T The integer type of the descriptor
+     */
     template <class Tag, class T = int>
     class int_descriptor final
     {
         public:
 
-        using type_traits = std::conditional_t<ndgpp::is_class_defined<int_descriptor_traits<Tag, T>>::value,
-                                               int_descriptor_traits<Tag, T>,
-                                               int_descriptor_default_traits>;
+        using type_traits = std::conditional_t<ndgpp::is_class_defined<linuxpp::int_descriptor_traits<Tag>>::value,
+                                               linuxpp::int_descriptor_traits<Tag>,
+                                               linuxpp::int_descriptor_default_traits>;
         using value_type = T;
 
+        /// Constructs an int_descriptor object assigned to type_traits::invalid_value
         constexpr int_descriptor() noexcept;
 
+        /** Constructs an int_descriptor object assigned to the provided value
+         *
+         *  @param value The value the object is to be assigned to
+         */
         explicit
-        constexpr int_descriptor(const T invalid_value) noexcept;
+        constexpr int_descriptor(const T value) noexcept;
 
         int_descriptor(const int_descriptor&) noexcept;
         int_descriptor& operator=(const int_descriptor&) noexcept;
@@ -38,14 +65,25 @@ namespace linuxpp
         int_descriptor(int_descriptor&&) noexcept;
         int_descriptor& operator=(int_descriptor&&) noexcept;
 
+        /// Returns the underlying descriptor value
         T get() const noexcept;
 
+        /// Swaps two int_descriptors
         void swap(int_descriptor& other) noexcept;
 
+        /** Sets the underlying descriptor to the provided value
+         *
+         *  @param fd The value the object is to be to assigned to
+         */
         void reset(T fd = type_traits::invalid_value) noexcept;
 
+        /** Sets the underlying descriptor to type_traits::invalid_value
+         *
+         *  @return The previously stored descriptor value
+         */
         T release() noexcept;
 
+        /// Returns true if the underlying descriptor is not equal to type_traits::invalid_value
         explicit operator bool() const noexcept;
 
         private:
@@ -69,8 +107,8 @@ namespace linuxpp
     }
 
     template <class Tag, class T>
-    inline constexpr int_descriptor<Tag, T>::int_descriptor(const T descriptor) noexcept:
-        descriptor_(descriptor)
+    inline constexpr int_descriptor<Tag, T>::int_descriptor(const T value) noexcept:
+        descriptor_(value)
     {}
 
     template <class Tag, class T>

@@ -12,6 +12,9 @@ namespace linuxpp
     }
 
     using file_descriptor = int_descriptor<detail::file_descriptor_tag>;
+
+    static_assert(std::is_same<int_descriptor_default_traits, file_descriptor::type_traits>::value,
+                  "bad file_descriptor::type_traits");
 }
 
 #endif
