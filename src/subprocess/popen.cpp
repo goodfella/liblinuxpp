@@ -333,7 +333,7 @@ linuxpp::subprocess::popen::popen(const std::string& executable,
 
 linuxpp::subprocess::popen::~popen()
 {
-    if (std::get<child_pid>(this->members_))
+    if (this->pid())
     {
         std::terminate();
     }
@@ -342,7 +342,7 @@ linuxpp::subprocess::popen::~popen()
 linuxpp::subprocess::status
 linuxpp::subprocess::popen::wait(const int options)
 {
-    if (!std::get<child_pid>(this->members_))
+    if (!this->pid())
     {
         /// subprocess has already been waited on
         return std::get<child_status>(this->members_);
@@ -375,7 +375,7 @@ linuxpp::subprocess::status linuxpp::subprocess::popen::poll()
 
 void linuxpp::subprocess::popen::signal(const int signal)
 {
-    if (!std::get<child_pid>(this->members_))
+    if (!this->pid())
     {
         throw ndgpp_error(std::logic_error,
                           "child pid not set");
