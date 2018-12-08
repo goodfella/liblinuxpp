@@ -22,7 +22,7 @@ target_compile_options(linuxpp INTERFACE -std=c++14)
 target_compile_options(linuxpp PRIVATE -std=c++14 -pedantic -Wall -Werror)
 target_link_libraries(linuxpp ndgpp)
 
-set(liblinuxpp_compiler_flags -pedantic -Wall)
+set(liblinuxpp_compiler_flags -pedantic -Wall -Werror)
 
 if (LIBLINUXPP_UNIT_TESTS)
   add_subdirectory(test)
