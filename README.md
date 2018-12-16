@@ -11,6 +11,7 @@ not limited to:
 - [linuxpp::unique_fd](include/liblinuxpp/unique_fd.hpp)
 - [linuxpp::pipe](include/liblinuxpp/pipe.hpp)
 - [linuxpp::subprocess::popen](include/liblinuxpp/subprocess/popen.hpp)
+- [linuxpp::net::udp_socket](include/liblinuxpp/net/udp_socket.hpp)
 
 #### linuxpp::open
 
@@ -38,3 +39,9 @@ class was heavily inspired by Python's
 class.  This class improves the usability of subprocesses in a given
 program because it consolidates subprocess management functions into a
 single object.
+
+#### linuxpp::net::udp_socket
+
+A resource owning class for UDP sockets.  This class provides a
+receive member function, several send member functions, and other
+socket related functions such as bind.
