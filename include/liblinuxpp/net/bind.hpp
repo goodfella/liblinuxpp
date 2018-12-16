@@ -1,5 +1,5 @@
-#ifndef LIBLINUXPP_BIND_HPP
-#define LIBLINUXPP_BIND_HPP
+#ifndef LIBLINUXPP_NET_BIND_HPP
+#define LIBLINUXPP_NET_BIND_HPP
 
 #include <netinet/in.h>
 #include <netinet/ip.h>
@@ -17,13 +17,6 @@ namespace net {
      *  @param port The port to bind to
      */
     void bind(const int sd, const ndgpp::net::ipv4_address addr, const ndgpp::net::port port);
-
-    /** Binds a socket to INADDR_ANY and the provided port
-     *
-     *  @param sd The socket descriptor to bind
-     *  @param port The port to bind to
-     */
-    void bind(const int sd, const ndgpp::net::port port);
 
     /** Binds a socket to the port and address specified in the provided sockaddr_in struct
      *
