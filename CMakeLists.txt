@@ -18,6 +18,7 @@ add_library(linuxpp SHARED
   src/net/socket.cpp
   src/net/bind.cpp
   src/net/sockaddr.cpp
+  src/net/send.cpp
   src/net/udp_socket.cpp)
 
 target_include_directories(linuxpp INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)

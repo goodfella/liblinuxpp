@@ -45,13 +45,6 @@ namespace net
         udp_socket(const ndgpp::net::ipv4_address address,
                    const ndgpp::net::port port);
 
-        /** Constructs and binds a UDP socket to INADDR_ANY and the specified port
-         *
-         *  @param port The port to bind to
-         */
-        explicit
-        udp_socket(const ndgpp::net::port port);
-
         udp_socket(const udp_socket &) = delete;
         udp_socket & operator=(const udp_socket &) = delete;
 
@@ -68,17 +61,24 @@ namespace net
          */
         void bind(const ndgpp::net::ipv4_address addr, const ndgpp::net::port port);
 
-        /** Binds the socket to INADDR_ANY and the provided port
-         *
-         *  @param port The port to bind to
-         */
-        void bind(const ndgpp::net::port port);
-
         /// Swaps the given udp_socket with this
         void swap(udp_socket & other) noexcept;
 
         /// Returns the underlying socket descriptor
         int descriptor() const noexcept;
+
+        std::size_t recv(void * buf, std::size_t length);
+
+        std::size_t send(void const * buf,
+                         const std::size_t length,
+                         const ndgpp::net::ipv4_address addr,
+                         const ndgpp::net::port port,
+                         const int flags = 0);
+
+        std::size_t send(void const * buf,
+                         const std::size_t length,
+                         const struct sockaddr_in sockaddr,
+                         const int flags = 0);
 
         /// Returns true if the underlying socket is valid
         explicit operator bool() const noexcept;
