@@ -2,26 +2,14 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 
+#include <libndgpp/error.hpp>
+
+#include <liblinuxpp/net/sockaddr.hpp>
 #include <liblinuxpp/net/bind.hpp>
 
 void linuxpp::net::bind(const int sd, const ndgpp::net::ipv4_address addr, const ndgpp::net::port port)
 {
-    sockaddr_in sockaddr;
-    sockaddr.sin_family = AF_INET;
-    sockaddr.sin_port = htons(port.value());
-    sockaddr.sin_addr.s_addr = addr.to_uint32();
-
-    linuxpp::net::bind(sd, sockaddr);
-}
-
-void linuxpp::net::bind(const int sd, const ndgpp::net::port port)
-{
-    sockaddr_in addr;
-    addr.sin_family = AF_INET;
-    addr.sin_port = htons(port.value());
-    addr.sin_addr.s_addr = INADDR_ANY;
-
-    linuxpp::net::bind(sd, addr);
+    linuxpp::net::bind(sd, make_sockaddr(addr, port));
 }
 
 void linuxpp::net::bind(const int sd, const sockaddr_in addr)
