@@ -1,5 +1,5 @@
-#ifndef LIBLINUXPP_UDP_SOCKET_HPP
-#define LIBLINUXPP_UDP_SOCKET_HPP
+#ifndef LIBLINUXPP_NET_UDP_SOCKET_HPP
+#define LIBLINUXPP_NET_UDP_SOCKET_HPP
 
 #include <sys/socket.h>
 #include <netinet/in.h>
