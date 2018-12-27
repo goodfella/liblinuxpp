@@ -10,20 +10,37 @@
 namespace linuxpp {
 namespace net {
 
-    /** Binds a socket to the provided address and port
+    /** @defgroup net::bind net::bind
      *
-     *  @param sd The socket descriptor to bind
-     *  @param addr The address to bind to
+     *  The net::bind overload set contains functions for binding a socket to an address and port
+     *
+     *  @param sd The socket descriptor
+     *  @param addr The IP address to bind to
      *  @param port The port to bind to
-     */
-    void bind(const int sd, const ndgpp::net::ipv4_address addr, const ndgpp::net::port port);
-
-    /** Binds a socket to the port and address specified in the provided sockaddr_in struct
+     *  @param sockaddr A sockaddr struct to bind to
+     *  @param reuse_addr Set the SO_REUSEADDR socket option
+     *  @param reuse_port Set the SO_REUSEPORT socket option
      *
-     *  @param sd The socket descriptor to bind
-     *  @param addr The sockaddr_in struct to bind to
+     *  @{
      */
-    void bind(const int sd, const sockaddr_in addr);
+
+    /// Binds a socket to the provided address and port
+    void bind(const int sd,
+              const ndgpp::net::ipv4_address addr,
+              const ndgpp::net::port port,
+              const bool reuse_addr = false,
+              const bool reuse_port = false);
+
+    /// Binds a socket to the provided address and ephemeral port
+    void bind(const int sd,
+              const ndgpp::net::ipv4_address addr,
+              const bool reuse_addr = false);
+
+    /// Binds a socket to the port and address specified in the provided sockaddr_in struct
+    void bind(const int sd,
+              const sockaddr_in sockaddr,
+              const bool reuse_addr = false,
+              const bool reuse_port = false);
 }}
 
 #endif
