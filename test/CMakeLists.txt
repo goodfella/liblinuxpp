@@ -20,3 +20,5 @@ endfunction()
 liblinux_test(SOURCE_PATH unique_fd/test.cpp LINK_GTEST_MAIN)
 liblinux_test(SOURCE_PATH pipe/test.cpp LINK_GTEST_MAIN)
 liblinux_test(SOURCE_PATH subprocess/test.cpp)
+
+add_subdirectory(net)
