@@ -11,6 +11,7 @@
 #include <liblinuxpp/epoll.hpp>
 #include <liblinuxpp/net/ipv4_address.hpp>
 #include <liblinuxpp/net/send.hpp>
+#include <liblinuxpp/net/sockaddr.hpp>
 #include <liblinuxpp/net/socket.hpp>
 #include <liblinuxpp/net/sockopt.hpp>
 #include <liblinuxpp/net/udp_socket.hpp>
@@ -66,28 +67,35 @@ struct send_recv_test: public ::testing::Test
         recv_socket {AF_INET},
         send_socket {AF_INET}
     {
-        recv_socket.bind(ndgpp::net::ipv4_address {"127.0.0.1"}, true);
-        std::tie(addr, port) = linuxpp::net::getsockname_ipv4(recv_socket.descriptor());
+        recv_socket.bind(linuxpp::net::inaddr_loopback, true);
+        std::tie(receiver_addr, receiver_port) = linuxpp::net::getsockname_ipv4(recv_socket.descriptor());
         epoll.add(recv_socket.descriptor(), EPOLLIN);
+
+        send_socket.bind(linuxpp::net::inaddr_loopback, true);
+        std::tie(sender_addr, sender_port) = linuxpp::net::getsockname_ipv4(send_socket.descriptor());
     }
 
     linuxpp::epoll epoll;
     linuxpp::net::udp_socket recv_socket;
     linuxpp::net::udp_socket send_socket;
-    ndgpp::net::ipv4_address addr;
-    ndgpp::net::port port;
+    ndgpp::net::ipv4_address receiver_addr;
+    ndgpp::net::port receiver_port;
+    ndgpp::net::ipv4_address sender_addr;
+    ndgpp::net::port sender_port;
 
     using buffer_type = std::array<unsigned char, 5>;
     buffer_type send_buf = {{1,2,3,4,5}};
 };
 
-TEST_F(send_recv_test, test1)
+TEST_F(send_recv_test, recv_test1)
 {
+    // Tests recv that does not return the source port and address
+
     const std::size_t bytes_sent = linuxpp::net::send(send_socket.descriptor(),
                                                       send_buf.data(),
                                                       send_buf.size(),
-                                                      ndgpp::net::ipv4_address {"127.0.0.1"},
-                                                      port);
+                                                      receiver_addr,
+                                                      receiver_port);
     ASSERT_EQ(send_buf.size(), bytes_sent);
     const auto events = epoll.wait(std::chrono::seconds{5});
     EXPECT_FALSE(events.empty());
@@ -97,4 +105,62 @@ TEST_F(send_recv_test, test1)
 
     EXPECT_EQ(bytes_sent, bytes_recv);
     EXPECT_EQ(send_buf, recv_buf);
+}
+
+TEST_F(send_recv_test, recv_test2)
+{
+    // Tests recv that does return the source address and port
+
+    const std::size_t bytes_sent = linuxpp::net::send(send_socket.descriptor(),
+                                                      send_buf.data(),
+                                                      send_buf.size(),
+                                                      receiver_addr,
+                                                      receiver_port);
+
+    ASSERT_EQ(send_buf.size(), bytes_sent);
+    const auto events = epoll.wait(std::chrono::seconds{5});
+    ASSERT_FALSE(events.empty());
+
+    ndgpp::net::ipv4_address source_addr;
+    ndgpp::net::port source_port;
+    buffer_type recv_buf;
+
+    const std::size_t bytes_recv = recv_socket.recv(recv_buf.data(), recv_buf.size(), source_addr, source_port);
+
+    EXPECT_EQ(bytes_sent, bytes_recv);
+    EXPECT_EQ(send_buf, recv_buf);
+
+    EXPECT_EQ(sender_addr, source_addr);
+    EXPECT_EQ(sender_port, source_port);
+}
+
+TEST_F(send_recv_test, recv_test3)
+{
+    // Tests recv that does return the source address and port as a sockaddr_in
+
+    const std::size_t bytes_sent = linuxpp::net::send(send_socket.descriptor(),
+                                                      send_buf.data(),
+                                                      send_buf.size(),
+                                                      receiver_addr,
+                                                      receiver_port);
+
+    ASSERT_EQ(send_buf.size(), bytes_sent);
+    const auto events = epoll.wait(std::chrono::seconds{5});
+    ASSERT_FALSE(events.empty());
+
+    struct ::sockaddr_in sockaddr;
+    buffer_type recv_buf;
+
+    const std::size_t bytes_recv = recv_socket.recv(recv_buf.data(), recv_buf.size(), sockaddr);
+
+    ndgpp::net::ipv4_address source_addr;
+    ndgpp::net::port source_port;
+
+    std::tie(source_addr, source_port) = linuxpp::net::parse_sockaddr(sockaddr);
+
+    EXPECT_EQ(bytes_sent, bytes_recv);
+    EXPECT_EQ(send_buf, recv_buf);
+
+    EXPECT_EQ(sender_addr, source_addr);
+    EXPECT_EQ(sender_port, source_port);
 }
