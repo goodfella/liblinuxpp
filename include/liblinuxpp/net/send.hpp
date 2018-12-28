@@ -37,40 +37,40 @@ namespace net {
 
     std::size_t send(const int sd,
                      const struct msghdr msghdr,
-                     const int flags);
+                     const int flags = 0);
 
     std::size_t send(const int sd,
                      void const * const msg,
                      std::size_t length,
                      const ndgpp::net::ipv4_address address,
                      const ndgpp::net::port port,
-                     const int flags);
+                     const int flags = 0);
 
     std::size_t send(const int sd,
                      void const * const msg,
                      const std::size_t length,
                      const struct ::sockaddr_in sockaddr,
-                     const int flags);
+                     const int flags = 0);
 
     std::size_t send(const int sd,
                      iovec const * buffers,
                      const std::size_t size_buffers,
                      const ndgpp::net::ipv4_address address,
                      const ndgpp::net::port port,
-                     const int flags);
+                     const int flags = 0);
 
     std::size_t send(const int sd,
                      const std::vector<struct iovec> & buffers,
                      const ndgpp::net::ipv4_address address,
                      const ndgpp::net::port port,
-                     const int flags);
+                     const int flags = 0);
 
     template <std::size_t N>
     std::size_t send(const int sd,
                      const std::array<struct iovec, N> & buffers,
                      const ndgpp::net::ipv4_address address,
                      const ndgpp::net::port port,
-                     const int flags);
+                     const int flags = 0);
 
     /// @}
 
