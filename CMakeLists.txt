@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.5.1)
 project(liblinuxpp CXX)
 
+set (CMAKE_EXPORT_COMPILE_COMMANDS On)
+
 add_library(linuxpp SHARED
   src/pipe.cpp
   src/open.cpp
