@@ -12,6 +12,7 @@
 #include <liblinuxpp/net/socket.hpp>
 #include <liblinuxpp/net/udp_socket.hpp>
 #include <liblinuxpp/net/send.hpp>
+#include <liblinuxpp/net/recv.hpp>
 
 linuxpp::net::udp_socket::udp_socket() noexcept = default;
 
@@ -34,9 +35,41 @@ void linuxpp::net::udp_socket::close() noexcept
     std::get<sock_descriptor>(this->members_).reset();
 }
 
-void linuxpp::net::udp_socket::bind(const ndgpp::net::ipv4_address addr, const ndgpp::net::port port)
+void linuxpp::net::udp_socket::bind(const ndgpp::net::ipv4_address addr,
+                                    const ndgpp::net::port port,
+                                    const bool reuse_addr,
+                                    const bool reuse_port)
 {
-    linuxpp::net::bind(this->descriptor(), addr, port);
+    linuxpp::net::bind(this->descriptor(), addr, port, reuse_addr, reuse_port);
+}
+
+void linuxpp::net::udp_socket::bind(const ndgpp::net::ipv4_address addr, const bool reuse_addr)
+{
+    linuxpp::net::bind(this->descriptor(), addr, reuse_addr);
+}
+
+std::size_t linuxpp::net::udp_socket::recv(void * buf,
+                                           const std::size_t buflen,
+                                           const int flags)
+{
+    return linuxpp::net::recv(this->descriptor(), buf, buflen, flags);
+}
+
+std::size_t linuxpp::net::udp_socket::recv(void * buf,
+                                           const std::size_t buflen,
+                                           struct ::sockaddr_in & sockaddr,
+                                           const int flags)
+{
+    return linuxpp::net::recv(this->descriptor(), buf, buflen, sockaddr, flags);
+}
+
+std::size_t linuxpp::net::udp_socket::recv(void * buf,
+                                           const std::size_t buflen,
+                                           ndgpp::net::ipv4_address & addr,
+                                           ndgpp::net::port & port,
+                                           const int flags)
+{
+    return linuxpp::net::recv(this->descriptor(), buf, buflen, addr, port, flags);
 }
 
 std::size_t linuxpp::net::udp_socket::send(void const * const buf,
@@ -54,6 +87,23 @@ std::size_t linuxpp::net::udp_socket::send(void const * const buf,
                                            const int flags)
 {
     return linuxpp::net::send(this->descriptor(), buf, length, sockaddr, flags);
+}
+
+std::size_t linuxpp::net::udp_socket::send(struct iovec const * const buffers,
+                                           const std::size_t size_buffers,
+                                           const ndgpp::net::ipv4_address address,
+                                           const ndgpp::net::port port,
+                                           const int flags)
+{
+    return linuxpp::net::send(this->descriptor(), buffers, size_buffers, address, port, flags);
+}
+
+std::size_t linuxpp::net::udp_socket::send(struct iovec const * const buffers,
+                                           const std::size_t size_buffers,
+                                           const struct sockaddr_in sockaddr,
+                                           const int flags)
+{
+    return linuxpp::net::send(this->descriptor(), buffers, size_buffers, sockaddr, flags);
 }
 
 int linuxpp::net::udp_socket::descriptor() const noexcept

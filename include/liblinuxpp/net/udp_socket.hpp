@@ -1,14 +1,16 @@
 #ifndef LIBLINUXPP_NET_UDP_SOCKET_HPP
 #define LIBLINUXPP_NET_UDP_SOCKET_HPP
 
-#include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/udp.h>
+#include <sys/socket.h>
+#include <sys/uio.h>
 
 #include <tuple>
 #include <utility>
 
 #include <libndgpp/net/ipv4_address.hpp>
+#include <libndgpp/net/multicast_ipv4_address.hpp>
 #include <libndgpp/net/port.hpp>
 
 #include <liblinuxpp/unique_fd.hpp>
@@ -46,9 +48,9 @@ namespace net
                    const ndgpp::net::port port);
 
         udp_socket(const udp_socket &) = delete;
-        udp_socket & operator=(const udp_socket &) = delete;
-
         udp_socket(udp_socket &&) noexcept;
+
+        udp_socket & operator=(const udp_socket &) = delete;
         udp_socket & operator=(udp_socket &&) noexcept;
 
         /// Closes the underlying socket
@@ -58,8 +60,23 @@ namespace net
          *
          *  @param addr The address to bind to
          *  @param port The port to bind to
+         *  @param reuse_addr If true, set the SO_REUSEADDR socket option
+         *  @param reuse_port If true, set the SO_REUSEPORT socket option
          */
-        void bind(const ndgpp::net::ipv4_address addr, const ndgpp::net::port port);
+        void bind(const ndgpp::net::ipv4_address addr,
+                  const ndgpp::net::port port,
+                  const bool reuse_addr = false,
+                  const bool reuse_port = false);
+
+        /** Binds the socket to the provided address and an ephemeral port
+         *
+         *  @param addr The address to bind to
+         *  @param reuse_addr If true, set the SO_REUSEADDR socket option
+         */
+        void bind(const ndgpp::net::ipv4_address addr, const bool reuse_addr = false);
+
+        void join_group(const ndgpp::net::multicast_ipv4_address addr,
+                        const std::string & interface = "");
 
         /// Swaps the given udp_socket with this
         void swap(udp_socket & other) noexcept;
@@ -67,7 +84,18 @@ namespace net
         /// Returns the underlying socket descriptor
         int descriptor() const noexcept;
 
-        std::size_t recv(void * buf, std::size_t length);
+        std::size_t recv(void * buf, std::size_t buflen, const int flags = 0);
+
+        std::size_t recv(void * buf,
+                         std::size_t buflen,
+                         struct ::sockaddr_in & sockaddr,
+                         const int flags = 0);
+
+        std::size_t recv(void * buf,
+                         std::size_t buflen,
+                         ndgpp::net::ipv4_address & addr,
+                         ndgpp::net::port & port,
+                         const int flags = 0);
 
         std::size_t send(void const * buf,
                          const std::size_t length,
@@ -77,6 +105,17 @@ namespace net
 
         std::size_t send(void const * buf,
                          const std::size_t length,
+                         const struct sockaddr_in sockaddr,
+                         const int flags = 0);
+
+        std::size_t send(struct iovec const * const buffers,
+                         const std::size_t size_buffers,
+                         const ndgpp::net::ipv4_address addr,
+                         const ndgpp::net::port port,
+                         const int flags = 0);
+
+        std::size_t send(struct iovec const * const buffers,
+                         const std::size_t size_buffers,
                          const struct sockaddr_in sockaddr,
                          const int flags = 0);
 
