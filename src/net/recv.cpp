@@ -1,8 +1,10 @@
 #include <stdexcept>
+#include <tuple>
 
 #include <libndgpp/error.hpp>
 
 #include <liblinuxpp/net/recv.hpp>
+#include <liblinuxpp/net/sockaddr.hpp>
 
 std::size_t linuxpp::net::recv(const int sd,
                                void * buf,
@@ -69,7 +71,6 @@ std::size_t linuxpp::net::recv(const int sd,
 {
     struct ::sockaddr_in sockaddr = {};
     const std::size_t ret = linuxpp::net::recv(sd, buf, len, sockaddr, flags);
-    addr = sockaddr.sin_addr.s_addr;
-    port = sockaddr.sin_port;
+    std::tie(addr, port) = linuxpp::net::parse_sockaddr(sockaddr);
     return ret;
 }

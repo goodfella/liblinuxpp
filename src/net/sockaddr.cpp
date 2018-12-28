@@ -21,3 +21,10 @@ struct sockaddr_in linuxpp::net::make_sockaddr(const ndgpp::net::ipv4_address ad
 
     return sockaddr;
 }
+
+std::tuple<ndgpp::net::ipv4_address, ndgpp::net::port>
+linuxpp::net::parse_sockaddr(const struct ::sockaddr_in sockaddr) noexcept
+{
+    return std::make_tuple(ndgpp::net::ipv4_address{ntohl(sockaddr.sin_addr.s_addr)},
+                           ndgpp::net::port{ntohs(sockaddr.sin_port)});
+}
