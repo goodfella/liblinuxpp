@@ -38,6 +38,9 @@ namespace net
      *  @param sd The socket descriptor
      *  @param sockaddr [out] The sockaddr_in to write the name information to
      *
+     *  @throws ndgpp::error<std::system_error> if getsockname returns
+     *          an error
+     *
      *  @{
      */
     void getsockname(const int sd, struct ::sockaddr_in & sockaddr);
@@ -49,7 +52,10 @@ namespace net
      *
      *  @param sd The socket descriptor
      *
-     *  @throws ndgpp::error<std::invalid_argument> if the socket is not bound to an IPv4 address
+     *  @throws ndgpp::error<std::invalid_argument> if the socket is
+     *          not bound to an IPv4 address, or
+     *          ndgpp::error<std::system_error> if an error was
+     *          returned by getsockname
      */
     std::tuple<ndgpp::net::ipv4_address, ndgpp::net::port> getsockname_ipv4(const int sd);
 }
