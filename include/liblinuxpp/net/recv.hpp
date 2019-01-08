@@ -1,8 +1,9 @@
 #ifndef LIBLINUXPP_NET_RECV_HPP
 #define LIBLINUXPP_NET_RECV_HPP
 
-#include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/types.h>
+#include <sys/uio.h>
 
 #include <cstddef>
 
@@ -21,6 +22,8 @@ namespace net {
      *
      *  @param sd The socket descriptor
      *  @param buf The buffer to receive the message into
+     *  @param buffs A iovec structure
+     *  @param size_buffs The number of buffers in the iovec structure
      *  @param buflen The length of the buffer
      *  @param flags The flags for the recv system call
      *  @param sockaddr A sockaddr struct to store the address information
@@ -60,6 +63,27 @@ namespace net {
     std::size_t recv(const int sd,
                      void * buf,
                      const std::size_t buflen,
+                     ndgpp::net::ipv4_address & addr,
+                     ndgpp::net::port & port,
+                     const int flags = 0);
+
+    /// Calls the recvmsg system call
+    std::size_t recv(const int sd,
+                     struct iovec * const buffs,
+                     const std::size_t size_bufs,
+                     const int flags = 0);
+
+    /// Calls the recvmsg system call
+    std::size_t recv(const int sd,
+                     struct iovec * const buffs,
+                     const std::size_t size_bufs,
+                     struct ::sockaddr_in & sockaddr,
+                     const int flags = 0);
+
+    /// Calls the recvmsg system call
+    std::size_t recv(const int sd,
+                     struct iovec * const buffs,
+                     const std::size_t size_bufs,
                      ndgpp::net::ipv4_address & addr,
                      ndgpp::net::port & port,
                      const int flags = 0);

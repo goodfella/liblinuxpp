@@ -130,6 +130,45 @@ namespace net
                          ndgpp::net::port & port,
                          const int flags = 0);
 
+
+        // struct iovec based recv functions
+
+        /** Calls recvmsg
+         *
+         *  @param buffs The iovec array representing the buffers to receive into
+         *  @param size_buffs The number of instances in the iovec array
+         *  @param flags The flags to pass to recvmsg see man 2 recv for details
+         */
+        std::size_t recv(struct ::iovec * const buffs,
+                         const std::size_t size_buffs,
+                         const int flags = 0);
+
+        /** Calls recvmsg
+         *
+         *  @param buffs The iovec array representing the buffers to receive into
+         *  @param size_buffs The number of instances in the iovec array
+         *  @param sockaddr The sockaddr_in structure to store the address info
+         *  @param flags The flags to pass to recvmsg see man 2 recv for details
+         */
+        std::size_t recv(struct ::iovec * const buffs,
+                         const std::size_t size_buffs,
+                         struct ::sockaddr_in & sockaddr,
+                         const int flags = 0);
+
+        /** Calls recvmsg
+         *
+         *  @param buffs The iovec array representing the buffers to receive into
+         *  @param size_buffs The number of instances in the iovec array
+         *  @param addr The ndgpp::net::ipv4_address object to write the source address to
+         *  @param port The ndgpp::net::port object to write the source port to
+         *  @param flags The flags to pass to recvmsg see man 2 recv for details
+         */
+        std::size_t recv(struct ::iovec * const buffs,
+                         const std::size_t size_buffs,
+                         ndgpp::net::ipv4_address & addr,
+                         ndgpp::net::port & port,
+                         const int flags = 0);
+
         std::size_t send(void const * buf,
                          const std::size_t length,
                          const ndgpp::net::ipv4_address addr,

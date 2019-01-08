@@ -72,6 +72,30 @@ std::size_t linuxpp::net::udp_socket::recv(void * buf,
     return linuxpp::net::recv(this->descriptor(), buf, buflen, addr, port, flags);
 }
 
+std::size_t linuxpp::net::udp_socket::recv(struct ::iovec * const buffs,
+                                           const std::size_t size_buffs,
+                                           const int flags)
+{
+    return linuxpp::net::recv(this->descriptor(), buffs, size_buffs, flags);
+}
+
+std::size_t linuxpp::net::udp_socket::recv(struct ::iovec * const buffs,
+                                           const std::size_t size_buffs,
+                                           struct ::sockaddr_in & sockaddr,
+                                           const int flags)
+{
+    return linuxpp::net::recv(this->descriptor(), buffs, size_buffs, sockaddr, flags);
+}
+
+std::size_t linuxpp::net::udp_socket::recv(struct ::iovec * const buffs,
+                                           const std::size_t size_buffs,
+                                           ndgpp::net::ipv4_address & addr,
+                                           ndgpp::net::port & port,
+                                           const int flags)
+{
+    return linuxpp::net::recv(this->descriptor(), buffs, size_buffs, addr, port, flags);
+}
+
 std::size_t linuxpp::net::udp_socket::send(void const * const buf,
                                            const std::size_t length,
                                            const ndgpp::net::ipv4_address addr,
