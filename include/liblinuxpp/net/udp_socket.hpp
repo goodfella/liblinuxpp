@@ -105,18 +105,18 @@ namespace net
 
         std::size_t send(void const * buf,
                          const std::size_t length,
-                         const struct sockaddr_in sockaddr,
+                         const struct ::sockaddr_in sockaddr,
                          const int flags = 0);
 
-        std::size_t send(struct iovec const * const buffers,
+        std::size_t send(struct ::iovec const * const buffers,
                          const std::size_t size_buffers,
                          const ndgpp::net::ipv4_address addr,
                          const ndgpp::net::port port,
                          const int flags = 0);
 
-        std::size_t send(struct iovec const * const buffers,
+        std::size_t send(struct ::iovec const * const buffers,
                          const std::size_t size_buffers,
-                         const struct sockaddr_in sockaddr,
+                         const struct ::sockaddr_in sockaddr,
                          const int flags = 0);
 
         /// Returns true if the underlying socket is valid
