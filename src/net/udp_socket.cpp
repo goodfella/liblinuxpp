@@ -22,7 +22,7 @@ linuxpp::net::udp_socket::udp_socket(const int domain):
 
 linuxpp::net::udp_socket::udp_socket(const ndgpp::net::ipv4_address addr,
                                      const ndgpp::net::port port):
-    members_{linuxpp::unique_fd<>{linuxpp::net::socket(AF_INET, SOCK_DGRAM, 0)}}
+    linuxpp::net::udp_socket(AF_INET)
 {
     linuxpp::net::bind(this->descriptor(), addr, port);
 }
