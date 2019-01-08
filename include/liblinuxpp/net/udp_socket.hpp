@@ -84,13 +84,46 @@ namespace net
         /// Returns the underlying socket descriptor
         int descriptor() const noexcept;
 
+
+        // void * buffer based receive functions
+
+        /** Receives a datagram
+         *
+         *  @param buf The buffer to place the datagram into
+         *  @parma buflen The length of the buf parameter
+         *  @param flags The flags to pass to the recv system call see
+         *         man 2 recv for details
+         *
+         *  @throws ndgpp::error<std::system_error> when an error is encountered
+         */
         std::size_t recv(void * buf, std::size_t buflen, const int flags = 0);
 
+        /** Receives a datagram
+         *
+         *  @param buf The buffer to place the datagram into
+         *  @parma buflen The length of the buf parameter
+         *  @param sockaddr The sockaddr_in struct to place the sender information
+         *  @param flags The flags to pass to the recv system call see
+         *         man 2 recv for details
+         *
+         *  @throws ndgpp::error<std::system_error> when an error is encountered
+         */
         std::size_t recv(void * buf,
                          std::size_t buflen,
                          struct ::sockaddr_in & sockaddr,
                          const int flags = 0);
 
+        /** Receives a datagram
+         *
+         *  @param buf The buffer to place the datagram into
+         *  @parma buflen The length of the buf parameter
+         *  @param addr The address value to place the sender address in
+         *  @param port The port value to place the sender port in
+         *  @param flags The flags to pass to the recv system call see
+         *         man 2 recv for details
+         *
+         *  @throws ndgpp::error<std::system_error> when an error is encountered
+         */
         std::size_t recv(void * buf,
                          std::size_t buflen,
                          ndgpp::net::ipv4_address & addr,
