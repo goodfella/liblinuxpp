@@ -169,23 +169,56 @@ namespace net
                          ndgpp::net::port & port,
                          const int flags = 0);
 
+        /** Calls sendto system call
+         *
+         *  @param buf The buffer of data to send
+         *  @param length The length of the buffer
+         *  @param addr The destination address
+         *  @param port The destination port
+         *  @param flags The flags to pass to sendto see man 2 sendto
+         */
         std::size_t send(void const * buf,
                          const std::size_t length,
                          const ndgpp::net::ipv4_address addr,
                          const ndgpp::net::port port,
                          const int flags = 0);
 
+        /** Calls sendto system call
+         *
+         *  @param buf The buffer of data to send
+         *  @param length The length of the buffer
+         *  @param sockaddr The sockaddr containing the destination info
+         *  @param flags The flags to pass to sendto see man 2 sendto
+         */
         std::size_t send(void const * buf,
                          const std::size_t length,
                          const struct ::sockaddr_in sockaddr,
                          const int flags = 0);
 
+
+        // struct iovec based recv functions
+
+        /** Calls sendto system call
+         *
+         *  @param buffers The buffers of data to send
+         *  @param size_buffers The number of buffers
+         *  @param addr The destination address
+         *  @param port The destination port
+         *  @param flags The flags to pass to sendto see man 2 sendto
+         */
         std::size_t send(struct ::iovec const * const buffers,
                          const std::size_t size_buffers,
                          const ndgpp::net::ipv4_address addr,
                          const ndgpp::net::port port,
                          const int flags = 0);
 
+        /** Calls sendto system call
+         *
+         *  @param buffers The buffers of data to send
+         *  @param size_buffers The number of buffers
+         *  @param sockaddr The sockaddr containing the destination info
+         *  @param flags The flags to pass to sendto see man 2 sendto
+         */
         std::size_t send(struct ::iovec const * const buffers,
                          const std::size_t size_buffers,
                          const struct ::sockaddr_in sockaddr,
