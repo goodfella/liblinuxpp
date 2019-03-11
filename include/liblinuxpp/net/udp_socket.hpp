@@ -75,8 +75,25 @@ namespace net
          */
         void bind(const ndgpp::net::ipv4_address addr, const bool reuse_addr = false);
 
-        void join_group(const ndgpp::net::multicast_ipv4_address addr,
-                        const std::string & interface = "");
+        /** Joins a multicast group
+         *
+         *  @param maddr The address of the group to join
+         *
+         *  @param interface The interface to join the group on.  This
+         *                   pointer must not be null.
+         */
+        void join_group(const ndgpp::net::multicast_ipv4_address maddr,
+                        char const * const interface);
+
+        /** Joins a multicast group
+         *
+         *  @param maddr The address of the group to join
+         *
+         *  @param addr The address of the local interface with which
+         *              the system should join the multicast group.
+         */
+        void join_group(const ndgpp::net::multicast_ipv4_address maddr,
+                        const ndgpp::net::ipv4_address addr);
 
         /// Swaps the given udp_socket with this
         void swap(udp_socket & other) noexcept;

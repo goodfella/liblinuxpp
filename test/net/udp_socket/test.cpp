@@ -241,3 +241,46 @@ TEST_F(send_recv_test, recv_test6)
     EXPECT_EQ(sender_addr, addr);
     EXPECT_EQ(sender_port, port);
 }
+
+
+struct join_group_test: public ::testing::Test
+{
+    protected:
+
+    join_group_test():
+        socket {AF_INET}
+    {}
+
+    linuxpp::net::udp_socket socket;
+};
+
+TEST_F(join_group_test, invalid_interface)
+{
+    const auto throws = [this] () {
+        this->socket.join_group(ndgpp::net::multicast_ipv4_address {"239.1.2.3"},
+                                "invalid interface");
+    };
+
+    using exception_type = ndgpp::error<std::system_error>;
+    EXPECT_THROW(throws(), exception_type);
+}
+
+TEST_F(join_group_test, valid_interface)
+{
+    const auto func = [this] () {
+        this->socket.join_group(ndgpp::net::multicast_ipv4_address {"239.1.2.3"},
+                                "lo");
+    };
+
+    EXPECT_NO_THROW(func());
+}
+
+TEST_F(join_group_test, interface_address)
+{
+    const auto func = [this] () {
+        this->socket.join_group(ndgpp::net::multicast_ipv4_address {"239.1.2.3"},
+                                linuxpp::net::inaddr_loopback);
+    };
+
+    EXPECT_NO_THROW(func());
+}

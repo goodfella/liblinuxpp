@@ -1,4 +1,6 @@
+#include <arpa/inet.h>
 #include <netinet/in.h>
+#include <netinet/ip.h>
 #include <netinet/udp.h>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -9,10 +11,14 @@
 #include <libndgpp/error.hpp>
 
 #include <liblinuxpp/net/bind.hpp>
-#include <liblinuxpp/net/socket.hpp>
-#include <liblinuxpp/net/udp_socket.hpp>
-#include <liblinuxpp/net/send.hpp>
+#include <liblinuxpp/net/interface.hpp>
+#include <liblinuxpp/net/ip_options.hpp>
 #include <liblinuxpp/net/recv.hpp>
+#include <liblinuxpp/net/send.hpp>
+#include <liblinuxpp/net/socket.hpp>
+#include <liblinuxpp/net/sockopt.hpp>
+#include <liblinuxpp/net/udp_socket.hpp>
+
 
 linuxpp::net::udp_socket::udp_socket() noexcept = default;
 
@@ -46,6 +52,27 @@ void linuxpp::net::udp_socket::bind(const ndgpp::net::ipv4_address addr,
 void linuxpp::net::udp_socket::bind(const ndgpp::net::ipv4_address addr, const bool reuse_addr)
 {
     linuxpp::net::bind(this->descriptor(), addr, reuse_addr);
+}
+
+void linuxpp::net::udp_socket::join_group(const ndgpp::net::multicast_ipv4_address maddr,
+                                          char const * const interface)
+{
+    struct ::ip_mreqn ip_mreqn = {};
+    ip_mreqn.imr_multiaddr.s_addr = htonl(maddr.to_uint32());
+    ip_mreqn.imr_ifindex = linuxpp::net::if_nametoindex(interface);
+
+    linuxpp::net::setsockopt<linuxpp::net::so::add_membership>(this->descriptor(), ip_mreqn);
+}
+
+void linuxpp::net::udp_socket::join_group(const ndgpp::net::multicast_ipv4_address maddr,
+                                          const ndgpp::net::ipv4_address addr)
+{
+    struct ::ip_mreqn ip_mreqn = {};
+    ip_mreqn.imr_multiaddr.s_addr = htonl(maddr.to_uint32());
+    ip_mreqn.imr_address.s_addr = htonl(addr.to_uint32());
+    ip_mreqn.imr_ifindex = 0;
+
+    linuxpp::net::setsockopt<linuxpp::net::so::add_membership>(this->descriptor(), ip_mreqn);
 }
 
 std::size_t linuxpp::net::udp_socket::recv(void * buf,
