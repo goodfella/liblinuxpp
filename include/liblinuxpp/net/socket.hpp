@@ -16,6 +16,12 @@ namespace linuxpp
 {
 namespace net
 {
+    struct bind_socket_t {};
+    struct connect_socket_t {};
+
+    constexpr bind_socket_t bind_socket;
+    constexpr connect_socket_t connect_socket;
+
     /** Constructs a socket with the given domain, type and protocol
      *
      *  @param domain The socket domain.  See man 2 socket
