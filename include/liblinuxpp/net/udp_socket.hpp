@@ -13,6 +13,7 @@
 #include <libndgpp/net/multicast_ipv4_address.hpp>
 #include <libndgpp/net/port.hpp>
 
+#include <liblinuxpp/net/socket.hpp>
 #include <liblinuxpp/unique_fd.hpp>
 
 namespace linuxpp
@@ -40,11 +41,16 @@ namespace net
 
         /** Constructs and binds a UDP socket to the specified address and port
          *
+         *  @param bind_socket Tag type that causes this constructor
+         *                     overload to do a bind
+         *
          *  @param address The address to bind to
+         *
          *  @param port The port to bind to
          */
         explicit
-        udp_socket(const ndgpp::net::ipv4_address address,
+        udp_socket(const linuxpp::net::bind_socket_t do_bind,
+                   const ndgpp::net::ipv4_address address,
                    const ndgpp::net::port port);
 
         udp_socket(const udp_socket &) = delete;

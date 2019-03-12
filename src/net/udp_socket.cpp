@@ -26,7 +26,8 @@ linuxpp::net::udp_socket::udp_socket(const int domain):
     members_{linuxpp::unique_fd<>{linuxpp::net::socket(domain, SOCK_DGRAM, 0)}}
 {}
 
-linuxpp::net::udp_socket::udp_socket(const ndgpp::net::ipv4_address addr,
+linuxpp::net::udp_socket::udp_socket(const linuxpp::net::bind_socket_t,
+                                     const ndgpp::net::ipv4_address addr,
                                      const ndgpp::net::port port):
     linuxpp::net::udp_socket(AF_INET)
 {
