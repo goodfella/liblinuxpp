@@ -64,6 +64,15 @@ namespace net
      *          returned by getsockname
      */
     std::tuple<ndgpp::net::ipv4_address, ndgpp::net::port> getsockname_ipv4(const int sd);
+
+    /** Marks the socket as a passive socket
+     *
+     *  @param sd The socket descriptor
+     *
+     *  @param backlog Maximum length of the pending connection
+     *                 queue.
+     */
+    void listen(const int sd, const int backlog);
 }
 }
 

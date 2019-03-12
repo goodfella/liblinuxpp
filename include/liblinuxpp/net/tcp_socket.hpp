@@ -4,6 +4,7 @@
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <sys/socket.h>
+#include <sys/types.h>
 #include <sys/uio.h>
 
 #include <tuple>
@@ -85,6 +86,29 @@ namespace net
          *  @param port The port to bind to
          */
         void connect(const ndgpp::net::ipv4_address addr, const ndgpp::net::port port);
+
+        /** Marks the socket as a passive socket
+         *
+         *  @param backlog Maximum length of the pending connection
+         *                 queue
+         */
+        void listen(const int backlog);
+
+        /** Accepts a client connection
+         *
+         *  @param flags The flags to pass to the accept system call
+         */
+        int accept(const int flags = 0);
+
+        /** Accepts a client connection
+         *
+         *  @param addr The address of the client socket
+         *  @param addr The port of the client socket
+         *  @param flags The flags to pass to the accept system call
+         */
+        int accept(ndgpp::net::ipv4_address & addr,
+                   ndgpp::net::port & port,
+                   const int flags = 0);
 
         private:
 

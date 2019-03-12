@@ -18,6 +18,7 @@ add_library(linuxpp SHARED
   src/subprocess/argv.cpp
   src/subprocess/popen.cpp
   src/net/socket.cpp
+  src/net/accept.cpp
   src/net/bind.cpp
   src/net/connect.cpp
   src/net/sockaddr.cpp

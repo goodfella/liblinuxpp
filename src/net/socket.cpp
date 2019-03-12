@@ -41,3 +41,14 @@ std::tuple<ndgpp::net::ipv4_address, ndgpp::net::port> linuxpp::net::getsockname
 
     return std::make_tuple(ndgpp::net::ipv4_address{ntohl(sockaddr.sin_addr.s_addr)}, ntohs(sockaddr.sin_port));
 }
+
+void linuxpp::net::listen(const int sd, const int backlog)
+{
+    const int ret = ::listen(sd, backlog);
+    if (ret == -1)
+    {
+        throw ndgpp_error(std::system_error,
+                          std::error_code (errno, std::system_category()),
+                          "listen system call failed");
+    }
+}

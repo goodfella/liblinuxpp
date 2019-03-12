@@ -1,3 +1,4 @@
+#include <liblinuxpp/net/accept.hpp>
 #include <liblinuxpp/net/bind.hpp>
 #include <liblinuxpp/net/connect.hpp>
 #include <liblinuxpp/net/tcp_socket.hpp>
@@ -49,4 +50,21 @@ void linuxpp::net::tcp_socket::connect(const ndgpp::net::ipv4_address address,
                                        const ndgpp::net::port port)
 {
     linuxpp::net::connect(this->descriptor(), address, port);
+}
+
+void linuxpp::net::tcp_socket::listen(const int backlog)
+{
+    linuxpp::net::listen(this->descriptor(), backlog);
+}
+
+int linuxpp::net::tcp_socket::accept(const int flags)
+{
+    return linuxpp::net::accept(this->descriptor(), flags);
+}
+
+int linuxpp::net::tcp_socket::accept(ndgpp::net::ipv4_address & addr,
+                                     ndgpp::net::port & port,
+                                     const int flags)
+{
+    return linuxpp::net::accept(this->descriptor(), addr, port, flags);
 }
