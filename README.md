@@ -12,6 +12,7 @@ not limited to:
 - [linuxpp::pipe](include/liblinuxpp/pipe.hpp)
 - [linuxpp::subprocess::popen](include/liblinuxpp/subprocess/popen.hpp)
 - [linuxpp::net::udp_socket](include/liblinuxpp/net/udp_socket.hpp)
+- [linuxpp::net::tcp_socket](include/liblinuxpp/net/tcp_socket.hpp)
 
 #### linuxpp::open
 
@@ -45,3 +46,8 @@ single object.
 A resource owning class for UDP sockets.  This class provides a
 receive member function, several send member functions, and other
 socket related functions such as bind.
+
+#### linuxpp::net::tcp_socket
+
+A resource owning class to TCP sockets.  This class provides member
+functions that facilitate implementing both TCP clients and servers.
