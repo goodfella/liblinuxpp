@@ -34,6 +34,11 @@ namespace so {
     struct reuse_port {};
     template <>
     struct traits<reuse_port> : public socket_int_trait<SO_REUSEPORT> {};
+
+    /// SO_ACCEPTCONN SOCKET TRAIT
+    struct accept_conn {};
+    template <>
+    struct traits<accept_conn> : public socket_int_trait<SO_ACCEPTCONN> {};
 }}}
 
 #endif
