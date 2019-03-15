@@ -17,15 +17,22 @@ linuxpp::net::tcp_socket::tcp_socket(const int domain):
 linuxpp::net::tcp_socket::tcp_socket(linuxpp::net::bind_socket_t do_bind,
                                      const ndgpp::net::ipv4_address address,
                                      const ndgpp::net::port port):
-   linuxpp::net::tcp_socket(AF_INET)
+    linuxpp::net::tcp_socket(AF_INET)
 {
     linuxpp::net::bind(this->descriptor(), address, port);
+}
+
+linuxpp::net::tcp_socket::tcp_socket(linuxpp::net::bind_socket_t do_bind,
+                                     const ndgpp::net::ipv4_address address):
+    linuxpp::net::tcp_socket(AF_INET)
+{
+    linuxpp::net::bind(this->descriptor(), address);
 }
 
 linuxpp::net::tcp_socket::tcp_socket(linuxpp::net::connect_socket_t do_connect,
                                      const ndgpp::net::ipv4_address address,
                                      const ndgpp::net::port port):
-   linuxpp::net::tcp_socket(AF_INET)
+    linuxpp::net::tcp_socket(AF_INET)
 {
     linuxpp::net::connect(this->descriptor(), address, port);
 }
@@ -33,6 +40,11 @@ linuxpp::net::tcp_socket::tcp_socket(linuxpp::net::connect_socket_t do_connect,
 int linuxpp::net::tcp_socket::descriptor() const noexcept
 {
     return std::get<sock_descriptor>(this->members_).get();
+}
+
+linuxpp::net::tcp_socket::operator bool() const noexcept
+{
+    return static_cast<bool>(std::get<sock_descriptor>(this->members_));
 }
 
 void linuxpp::net::tcp_socket::close() noexcept
@@ -44,6 +56,11 @@ void linuxpp::net::tcp_socket::bind(const ndgpp::net::ipv4_address address,
                                     const ndgpp::net::port port)
 {
     linuxpp::net::bind(this->descriptor(), address, port);
+}
+
+void linuxpp::net::tcp_socket::bind(const ndgpp::net::ipv4_address address)
+{
+    linuxpp::net::bind(this->descriptor(), address);
 }
 
 void linuxpp::net::tcp_socket::connect(const ndgpp::net::ipv4_address address,

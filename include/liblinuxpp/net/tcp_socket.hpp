@@ -49,6 +49,15 @@ namespace net
                    const ndgpp::net::ipv4_address address,
                    const ndgpp::net::port port);
 
+        /** Constructs and binds a TCP socket to the specified address and ephemeral port
+         *
+         *  @param do_bind Tag type indicating that a bind should be performed
+         *  @param address The address to bind to
+         */
+        explicit
+        tcp_socket(linuxpp::net::bind_socket_t do_bind,
+                   const ndgpp::net::ipv4_address address);
+
         /** Constructs and connects a TCP socket to the specified address and port
          *
          *  @param do_connect Tag type indicating that a connect should be performed
@@ -69,6 +78,9 @@ namespace net
         /// Returns the underlying socket descriptor
         int descriptor() const noexcept;
 
+        explicit
+        operator bool () const noexcept;
+
         /// Closes the underlying socket
         void close() noexcept;
 
@@ -79,6 +91,12 @@ namespace net
          */
         void bind(const ndgpp::net::ipv4_address addr,
                   const ndgpp::net::port port);
+
+        /** Binds the socket to the provided address and an ephemeral port
+         *
+         *  @param addr The address to bind to
+         */
+        void bind(const ndgpp::net::ipv4_address addr);
 
         /** Connects the socket to the provided address
          *
