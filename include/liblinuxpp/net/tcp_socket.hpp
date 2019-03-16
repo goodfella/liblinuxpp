@@ -87,6 +87,8 @@ namespace net
         /// Shuts down the socket
         void shutdown(const int how);
 
+        void swap(linuxpp::net::tcp_socket & other) noexcept;
+
         /** Binds the socket to the provided address and port
          *
          *  @param addr The address to bind to
@@ -142,6 +144,16 @@ namespace net
 
         tuple_type members_ = {};
     };
+
+    inline void tcp_socket::swap(linuxpp::net::tcp_socket & other) noexcept
+    {
+        std::swap(this->members_, other.members_);
+    }
+
+    void swap(linuxpp::net::tcp_socket lhs, linuxpp::net::tcp_socket & rhs) noexcept
+    {
+        lhs.swap(rhs);
+    }
 }}
 
 #endif
