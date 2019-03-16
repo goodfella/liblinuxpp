@@ -32,7 +32,7 @@ int linuxpp::net::accept(const int sd,
                          struct ::sockaddr_in & sockaddr,
                          const int flags)
 {
-    ::socklen_t socklen = 0;
+    ::socklen_t socklen = sizeof(sockaddr);
     const int ret = detail::accept(sd,
                                    reinterpret_cast<struct ::sockaddr *>(&sockaddr),
                                    &socklen,
