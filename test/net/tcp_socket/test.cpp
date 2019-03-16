@@ -131,6 +131,10 @@ TEST_F(accept_test, with_addr_info)
     const int client_fd = server.socket.accept(client_addr, client_port);
 
     ASSERT_NE(-1, client_fd);
+
+    const int fd_flags = linuxpp::fcntl(client_fd, F_GETFD);
+    EXPECT_TRUE(fd_flags & FD_CLOEXEC);
+
     EXPECT_EQ(std::get<ndgpp::net::ipv4_address>(client_sockaddr), client_addr);
     EXPECT_EQ(std::get<ndgpp::net::port>(client_sockaddr), client_port);
 }
@@ -142,7 +146,10 @@ TEST_F(accept_test, without_addr_info)
 
     const int client_fd = server.socket.accept();
 
-    EXPECT_NE(-1, client_fd);
+    ASSERT_NE(-1, client_fd);
+
+    const int fd_flags = linuxpp::fcntl(client_fd, F_GETFD);
+    EXPECT_TRUE(fd_flags & FD_CLOEXEC);
 }
 
 TEST_F(accept_test, with_flags)
@@ -153,8 +160,11 @@ TEST_F(accept_test, with_flags)
     const int client_fd = server.socket.accept(SOCK_NONBLOCK);
     ASSERT_NE(-1, client_fd);
 
-    const int flags = linuxpp::fcntl(client_fd, F_GETFL);
-    EXPECT_TRUE(flags & O_NONBLOCK);
+    const int fd_flags = linuxpp::fcntl(client_fd, F_GETFD);
+    EXPECT_TRUE(fd_flags & FD_CLOEXEC);
+
+    const int status_flags = linuxpp::fcntl(client_fd, F_GETFL);
+    EXPECT_TRUE(status_flags & O_NONBLOCK);
 }
 
 // struct send_recv_test: public ::testing::Test

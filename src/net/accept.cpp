@@ -25,7 +25,7 @@ namespace detail
 int linuxpp::net::accept(const int sd,
                          const int flags)
 {
-    return detail::accept(sd, nullptr, nullptr, flags);
+    return detail::accept(sd, nullptr, nullptr, flags | SOCK_CLOEXEC);
 }
 
 int linuxpp::net::accept(const int sd,
@@ -36,7 +36,7 @@ int linuxpp::net::accept(const int sd,
     const int ret = detail::accept(sd,
                                    reinterpret_cast<struct ::sockaddr *>(&sockaddr),
                                    &socklen,
-                                   flags);
+                                   flags | SOCK_CLOEXEC);
 
     if (socklen != sizeof(sockaddr))
     {
