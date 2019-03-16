@@ -68,32 +68,80 @@ TEST(listen, test)
     EXPECT_EQ(1, listening.option_value);
 }
 
-struct connect_test: public ::testing::Test
+struct server_socket
 {
-    connect_test():
-        server_socket{linuxpp::net::bind_socket, linuxpp::net::inaddr_loopback},
-        server_sockaddr{linuxpp::net::getsockname_ipv4(server_socket.descriptor())}
+    server_socket():
+        socket{linuxpp::net::bind_socket, linuxpp::net::inaddr_loopback},
+        sockaddr{linuxpp::net::getsockname_ipv4(socket.descriptor())}
     {
-        server_socket.listen(1);
+        socket.listen(1);
     }
 
-    linuxpp::net::tcp_socket server_socket;
-    std::tuple<ndgpp::net::ipv4_address, ndgpp::net::port> server_sockaddr;
+    linuxpp::net::tcp_socket socket;
+    std::tuple<ndgpp::net::ipv4_address, ndgpp::net::port> sockaddr;
+};
+
+struct connect_test: public ::testing::Test
+{
+    server_socket server;
 };
 
 TEST_F(connect_test, ctor)
 {
     linuxpp::net::tcp_socket client_socket{linuxpp::net::connect_socket,
                                            ndgpp::net::ipv4_address{0x7f000001},
-                                           std::get<ndgpp::net::port>(server_sockaddr)};
+                                           std::get<ndgpp::net::port>(server.sockaddr)};
 }
 
 TEST_F(connect_test, member_function)
 {
     linuxpp::net::tcp_socket client_socket{AF_INET};
 
-    client_socket.connect(std::get<ndgpp::net::ipv4_address>(server_sockaddr),
-                          std::get<ndgpp::net::port>(server_sockaddr));
+    client_socket.connect(std::get<ndgpp::net::ipv4_address>(server.sockaddr),
+                          std::get<ndgpp::net::port>(server.sockaddr));
+}
+
+struct accept_test: public ::testing::Test
+{
+    accept_test():
+        client_socket{AF_INET}
+    {
+        epoll.add(server.socket.descriptor(), EPOLLIN);
+        client_socket.connect(std::get<ndgpp::net::ipv4_address>(server.sockaddr),
+                              std::get<ndgpp::net::port>(server.sockaddr));
+
+        client_sockaddr = linuxpp::net::getsockname_ipv4(client_socket.descriptor());
+    }
+
+    server_socket server;
+    linuxpp::net::tcp_socket client_socket;
+    std::tuple<ndgpp::net::ipv4_address, ndgpp::net::port> client_sockaddr;
+    linuxpp::epoll epoll;
+};
+
+TEST_F(accept_test, with_addr_info)
+{
+    const auto ret = epoll.wait(std::chrono::seconds(5));
+    ASSERT_EQ(1U, ret.size());
+
+    ndgpp::net::ipv4_address client_addr;
+    ndgpp::net::port client_port;
+
+    const int client_fd = server.socket.accept(client_addr, client_port);
+
+    ASSERT_NE(-1, client_fd);
+    EXPECT_EQ(std::get<ndgpp::net::ipv4_address>(client_sockaddr), client_addr);
+    EXPECT_EQ(std::get<ndgpp::net::port>(client_sockaddr), client_port);
+}
+
+TEST_F(accept_test, without_addr_info)
+{
+    const auto ret = epoll.wait(std::chrono::seconds(5));
+    ASSERT_EQ(1U, ret.size());
+
+    const int client_fd = server.socket.accept();
+
+    EXPECT_NE(-1, client_fd);
 }
 
 // struct send_recv_test: public ::testing::Test
