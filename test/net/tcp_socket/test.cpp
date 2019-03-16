@@ -9,6 +9,7 @@
 #include <gtest/gtest.h>
 
 #include <liblinuxpp/epoll.hpp>
+#include <liblinuxpp/fcntl.hpp>
 #include <liblinuxpp/net/ipv4_address.hpp>
 #include <liblinuxpp/net/send.hpp>
 #include <liblinuxpp/net/sockaddr.hpp>
@@ -142,6 +143,18 @@ TEST_F(accept_test, without_addr_info)
     const int client_fd = server.socket.accept();
 
     EXPECT_NE(-1, client_fd);
+}
+
+TEST_F(accept_test, with_flags)
+{
+    const auto ret = epoll.wait(std::chrono::seconds(5));
+    ASSERT_EQ(1U, ret.size());
+
+    const int client_fd = server.socket.accept(SOCK_NONBLOCK);
+    ASSERT_NE(-1, client_fd);
+
+    const int flags = linuxpp::fcntl(client_fd, F_GETFL);
+    EXPECT_TRUE(flags & O_NONBLOCK);
 }
 
 // struct send_recv_test: public ::testing::Test
