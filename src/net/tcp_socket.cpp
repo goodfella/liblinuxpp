@@ -1,3 +1,7 @@
+#include <sys/socket.h>
+
+#include <libndgpp/error.hpp>
+
 #include <liblinuxpp/net/accept.hpp>
 #include <liblinuxpp/net/bind.hpp>
 #include <liblinuxpp/net/connect.hpp>
@@ -50,6 +54,17 @@ linuxpp::net::tcp_socket::operator bool() const noexcept
 void linuxpp::net::tcp_socket::close() noexcept
 {
     std::get<sock_descriptor>(this->members_).reset();
+}
+
+void linuxpp::net::tcp_socket::shutdown(const int how)
+{
+    const int ret = ::shutdown(this->descriptor(), how);
+    if (ret == -1)
+    {
+        throw ndgpp_error(std::system_error,
+                          std::error_code (errno, std::system_category()),
+                          "shutdown failed");
+    }
 }
 
 void linuxpp::net::tcp_socket::bind(const ndgpp::net::ipv4_address address,

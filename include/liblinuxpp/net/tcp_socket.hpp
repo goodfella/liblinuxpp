@@ -84,6 +84,9 @@ namespace net
         /// Closes the underlying socket
         void close() noexcept;
 
+        /// Shuts down the socket
+        void shutdown(const int how);
+
         /** Binds the socket to the provided address and port
          *
          *  @param addr The address to bind to
