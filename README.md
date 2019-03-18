@@ -49,5 +49,5 @@ socket related functions such as bind.
 
 #### linuxpp::net::tcp_socket
 
-A resource owning class to TCP sockets.  This class provides member
+A resource owning class for TCP sockets.  This class provides member
 functions that facilitate implementing both TCP clients and servers.
