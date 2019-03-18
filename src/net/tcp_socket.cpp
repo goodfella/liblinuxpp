@@ -5,6 +5,8 @@
 #include <liblinuxpp/net/accept.hpp>
 #include <liblinuxpp/net/bind.hpp>
 #include <liblinuxpp/net/connect.hpp>
+#include <liblinuxpp/net/recv.hpp>
+#include <liblinuxpp/net/send.hpp>
 #include <liblinuxpp/net/tcp_socket.hpp>
 
 
@@ -99,4 +101,32 @@ int linuxpp::net::tcp_socket::accept(ndgpp::net::ipv4_address & addr,
                                      const int flags)
 {
     return linuxpp::net::accept(this->descriptor(), addr, port, flags);
+}
+
+std::size_t linuxpp::net::tcp_socket::recv(void * buf,
+                                           const std::size_t buflen,
+                                           const int flags)
+{
+    return linuxpp::net::recv(this->descriptor(), buf, buflen, flags);
+}
+
+std::size_t linuxpp::net::tcp_socket::recv(struct ::iovec * const buffs,
+                                           const std::size_t size_buffs,
+                                           const int flags)
+{
+    return linuxpp::net::recv(this->descriptor(), buffs, size_buffs, flags);
+}
+
+std::size_t linuxpp::net::tcp_socket::send(void const * const buf,
+                                           const std::size_t length,
+                                           const int flags)
+{
+    return linuxpp::net::send(this->descriptor(), buf, length, flags);
+}
+
+std::size_t linuxpp::net::tcp_socket::send(struct iovec const * const buffers,
+                                           const std::size_t size_buffers,
+                                           const int flags)
+{
+    return linuxpp::net::send(this->descriptor(), buffers, size_buffers, flags);
 }

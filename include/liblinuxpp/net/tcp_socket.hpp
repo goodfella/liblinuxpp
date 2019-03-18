@@ -133,6 +133,54 @@ namespace net
                    ndgpp::net::port & port,
                    const int flags = 0);
 
+        // void * buffer based receive functions
+
+        /** Receives a message
+         *
+         *  @param buf The buffer to place the message into
+         *  @parma buflen The length of the buf parameter
+         *  @param flags The flags to pass to the recv system call see
+         *         man 2 recv for details
+         *
+         *  @throws ndgpp::error<std::system_error> when an error is encountered
+         */
+        std::size_t recv(void * buf, std::size_t buflen, const int flags = 0);
+
+
+        // struct iovec based recv functions
+
+        /** Calls recvmsg
+         *
+         *  @param buffs The iovec array representing the buffers to receive into
+         *  @param size_buffs The number of instances in the iovec array
+         *  @param flags The flags to pass to recvmsg see man 2 recv for details
+         */
+        std::size_t recv(struct ::iovec * const buffs,
+                         const std::size_t size_buffs,
+                         const int flags = 0);
+
+        /** Calls sendto system call
+         *
+         *  @param buf The buffer of data to send
+         *  @param length The length of the buffer
+         *  @param addr The destination address
+         *  @param port The destination port
+         *  @param flags The flags to pass to sendto see man 2 sendto
+         */
+        std::size_t send(void const * buf,
+                         const std::size_t length,
+                         const int flags = 0);
+
+        /** Calls sendmsg
+         *
+         *  @param buffers The buffers of data to send
+         *  @param size_buffers The number of buffers
+         *  @param flags The flags to pass to sendto see man 2 sendto
+         */
+        std::size_t send(struct ::iovec const * const buffers,
+                         const std::size_t size_buffers,
+                         const int flags = 0);
+
         private:
 
         enum members

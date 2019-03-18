@@ -1,6 +1,7 @@
-#include <sys/socket.h>
-#include <netinet/in.h>
 #include <arpa/inet.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <sys/types.h>
 
 #include <chrono>
 #include <iostream>
@@ -167,41 +168,80 @@ TEST_F(accept_test, with_flags)
     EXPECT_TRUE(status_flags & O_NONBLOCK);
 }
 
-// struct send_recv_test: public ::testing::Test
-// {
-//     protected:
+struct send_recv_test: public ::testing::Test
+{
+    protected:
 
-//     send_recv_test():
-//         recv_socket {AF_INET},
-//         send_socket {AF_INET}
-//     {
-//         recv_socket.bind(linuxpp::net::inaddr_loopback, true);
-//         std::tie(receiver_addr, receiver_port) = linuxpp::net::getsockname_ipv4(recv_socket.descriptor());
-//         epoll.add(recv_socket.descriptor(), EPOLLIN);
+    send_recv_test():
+        server_socket {AF_INET},
+        client_socket {AF_INET}
+    {
+        server_socket.bind(linuxpp::net::inaddr_loopback);
+        server_socket.listen(1);
 
-//         send_socket.bind(linuxpp::net::inaddr_loopback, true);
-//         std::tie(sender_addr, sender_port) = linuxpp::net::getsockname_ipv4(send_socket.descriptor());
+        std::tie(server_addr, server_port) = linuxpp::net::getsockname_ipv4(server_socket.descriptor());
 
-//         iovec = {{{&recv_buf[0], 1},
-//                   {&recv_buf[1], 1},
-//                   {&recv_buf[2], 1},
-//                   {&recv_buf[3], 1},
-//                   {&recv_buf[4], 1}}};
-//     }
+        client_socket.connect(server_addr, server_port);
+        server_client_sd = server_socket.accept();
 
-//     linuxpp::epoll epoll;
-//     linuxpp::net::udp_socket recv_socket;
-//     linuxpp::net::udp_socket send_socket;
-//     ndgpp::net::ipv4_address receiver_addr;
-//     ndgpp::net::port receiver_port;
-//     ndgpp::net::ipv4_address sender_addr;
-//     ndgpp::net::port sender_port;
+        epoll.add(server_socket.descriptor(), EPOLLIN);
+        epoll.add(client_socket.descriptor(), EPOLLIN);
 
-//     using buffer_type = std::array<unsigned char, 5>;
-//     buffer_type send_buf = {{1,2,3,4,5}};
-//     buffer_type recv_buf;
-//     std::array<struct ::iovec, 5> iovec;
-// };
+        std::tie(client_addr, client_port) = linuxpp::net::getsockname_ipv4(client_socket.descriptor());
+
+        iovec = {{{&recv_buf[0], 1},
+                  {&recv_buf[1], 1},
+                  {&recv_buf[2], 1},
+                  {&recv_buf[3], 1},
+                  {&recv_buf[4], 1}}};
+    }
+
+    void SetUp() override
+    {
+        ASSERT_NE(-1, server_client_sd);
+        epoll.add(server_client_sd, EPOLLIN);
+    }
+
+    linuxpp::epoll epoll;
+    linuxpp::net::tcp_socket server_socket;
+    linuxpp::net::tcp_socket client_socket;
+    int server_client_sd = -1;
+    ndgpp::net::ipv4_address server_addr;
+    ndgpp::net::port server_port;
+    ndgpp::net::ipv4_address client_addr;
+    ndgpp::net::port client_port;
+
+    using buffer_type = std::array<unsigned char, 5>;
+    buffer_type send_buf = {{1,2,3,4,5}};
+    buffer_type recv_buf;
+    std::array<struct ::iovec, std::tuple_size<buffer_type>::value> iovec;
+};
+
+TEST_F(send_recv_test, recv_test_buffer)
+{
+    linuxpp::net::send(server_client_sd, send_buf.data(), send_buf.size());
+    const auto events = epoll.wait(std::chrono::seconds(5));
+
+    ASSERT_EQ(1U, events.size());
+    ASSERT_EQ(client_socket.descriptor(), events[0].data.fd);
+
+    const std::size_t ret = client_socket.recv(recv_buf.data(), recv_buf.size(), MSG_WAITALL);
+    ASSERT_EQ(recv_buf.size(), ret);
+    EXPECT_EQ(send_buf, recv_buf);
+}
+
+TEST_F(send_recv_test, recv_test_iovec)
+{
+    linuxpp::net::send(server_client_sd, send_buf.data(), send_buf.size());
+    const auto events = epoll.wait(std::chrono::seconds(5));
+
+    ASSERT_EQ(1U, events.size());
+    ASSERT_EQ(client_socket.descriptor(), events[0].data.fd);
+
+    const std::size_t ret = client_socket.recv(iovec.data(), iovec.size(), MSG_WAITALL);
+    ASSERT_EQ(recv_buf.size(), ret);
+    EXPECT_EQ(send_buf, recv_buf);
+}
 
 // TEST_F(send_recv_test, recv_test1)
 // {
