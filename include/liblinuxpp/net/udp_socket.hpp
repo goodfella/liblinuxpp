@@ -219,7 +219,7 @@ namespace net
                          const int flags = 0);
 
 
-        // struct iovec based recv functions
+        // struct iovec based send functions
 
         /** Calls sendto system call
          *
