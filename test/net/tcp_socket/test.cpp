@@ -12,6 +12,7 @@
 #include <liblinuxpp/epoll.hpp>
 #include <liblinuxpp/fcntl.hpp>
 #include <liblinuxpp/net/ipv4_address.hpp>
+#include <liblinuxpp/net/recv.hpp>
 #include <liblinuxpp/net/send.hpp>
 #include <liblinuxpp/net/sockaddr.hpp>
 #include <liblinuxpp/net/socket.hpp>
@@ -189,11 +190,17 @@ struct send_recv_test: public ::testing::Test
 
         std::tie(client_addr, client_port) = linuxpp::net::getsockname_ipv4(client_socket.descriptor());
 
-        iovec = {{{&recv_buf[0], 1},
-                  {&recv_buf[1], 1},
-                  {&recv_buf[2], 1},
-                  {&recv_buf[3], 1},
-                  {&recv_buf[4], 1}}};
+        recv_iovec = {{{&recv_buf[0], 1},
+                       {&recv_buf[1], 1},
+                       {&recv_buf[2], 1},
+                       {&recv_buf[3], 1},
+                       {&recv_buf[4], 1}}};
+
+        send_iovec = {{{&send_buf[0], 1},
+                       {&send_buf[1], 1},
+                       {&send_buf[2], 1},
+                       {&send_buf[3], 1},
+                       {&send_buf[4], 1}}};
     }
 
     void SetUp() override
@@ -214,7 +221,8 @@ struct send_recv_test: public ::testing::Test
     using buffer_type = std::array<unsigned char, 5>;
     buffer_type send_buf = {{1,2,3,4,5}};
     buffer_type recv_buf;
-    std::array<struct ::iovec, std::tuple_size<buffer_type>::value> iovec;
+    std::array<struct ::iovec, std::tuple_size<buffer_type>::value> recv_iovec;
+    std::array<struct ::iovec, std::tuple_size<buffer_type>::value> send_iovec;
 };
 
 TEST_F(send_recv_test, recv_test_buffer)
@@ -238,154 +246,33 @@ TEST_F(send_recv_test, recv_test_iovec)
     ASSERT_EQ(1U, events.size());
     ASSERT_EQ(client_socket.descriptor(), events[0].data.fd);
 
-    const std::size_t ret = client_socket.recv(iovec.data(), iovec.size(), MSG_WAITALL);
+    const std::size_t ret = client_socket.recv(recv_iovec.data(), recv_iovec.size(), MSG_WAITALL);
     ASSERT_EQ(recv_buf.size(), ret);
     EXPECT_EQ(send_buf, recv_buf);
 }
 
-// TEST_F(send_recv_test, recv_test1)
-// {
-//     // Tests recv that does not return the source port and address
+TEST_F(send_recv_test, send_test_buf)
+{
+    client_socket.send(send_buf.data(), send_buf.size());
+    const auto events = epoll.wait(std::chrono::seconds(5));
 
-//     const std::size_t bytes_sent = linuxpp::net::send(send_socket.descriptor(),
-//                                                       send_buf.data(),
-//                                                       send_buf.size(),
-//                                                       receiver_addr,
-//                                                       receiver_port);
-//     ASSERT_EQ(send_buf.size(), bytes_sent);
-//     const auto events = epoll.wait(std::chrono::seconds{5});
-//     EXPECT_FALSE(events.empty());
+    ASSERT_EQ(1U, events.size());
+    ASSERT_EQ(server_client_sd, events[0].data.fd);
 
-//     const std::size_t bytes_recv = recv_socket.recv(recv_buf.data(), recv_buf.size());
+    const std::size_t ret = linuxpp::net::recv(server_client_sd, recv_buf.data(), recv_buf.size(), MSG_WAITALL);
+    ASSERT_EQ(recv_buf.size(), ret);
+    EXPECT_EQ(send_buf, recv_buf);
+}
 
-//     EXPECT_EQ(bytes_sent, bytes_recv);
-//     EXPECT_EQ(send_buf, recv_buf);
-// }
+TEST_F(send_recv_test, send_test_iovec)
+{
+    client_socket.send(send_iovec.data(), send_iovec.size());
+    const auto events = epoll.wait(std::chrono::seconds(5));
 
-// TEST_F(send_recv_test, recv_test2)
-// {
-//     // Tests recv that does return the source address and port
+    ASSERT_EQ(1U, events.size());
+    ASSERT_EQ(server_client_sd, events[0].data.fd);
 
-//     const std::size_t bytes_sent = linuxpp::net::send(send_socket.descriptor(),
-//                                                       send_buf.data(),
-//                                                       send_buf.size(),
-//                                                       receiver_addr,
-//                                                       receiver_port);
-
-//     ASSERT_EQ(send_buf.size(), bytes_sent);
-//     const auto events = epoll.wait(std::chrono::seconds{5});
-//     ASSERT_FALSE(events.empty());
-
-//     ndgpp::net::ipv4_address source_addr;
-//     ndgpp::net::port source_port;
-
-//     const std::size_t bytes_recv = recv_socket.recv(recv_buf.data(), recv_buf.size(), source_addr, source_port);
-
-//     EXPECT_EQ(bytes_sent, bytes_recv);
-//     EXPECT_EQ(send_buf, recv_buf);
-
-//     EXPECT_EQ(sender_addr, source_addr);
-//     EXPECT_EQ(sender_port, source_port);
-// }
-
-// TEST_F(send_recv_test, recv_test3)
-// {
-//     // Tests recv that does return the source address and port as a sockaddr_in
-
-//     const std::size_t bytes_sent = linuxpp::net::send(send_socket.descriptor(),
-//                                                       send_buf.data(),
-//                                                       send_buf.size(),
-//                                                       receiver_addr,
-//                                                       receiver_port);
-
-//     ASSERT_EQ(send_buf.size(), bytes_sent);
-//     const auto events = epoll.wait(std::chrono::seconds{5});
-//     ASSERT_FALSE(events.empty());
-
-//     struct ::sockaddr_in sockaddr;
-
-//     const std::size_t bytes_recv = recv_socket.recv(recv_buf.data(), recv_buf.size(), sockaddr);
-
-//     ndgpp::net::ipv4_address source_addr;
-//     ndgpp::net::port source_port;
-
-//     std::tie(source_addr, source_port) = linuxpp::net::parse_sockaddr(sockaddr);
-
-//     EXPECT_EQ(bytes_sent, bytes_recv);
-//     EXPECT_EQ(send_buf, recv_buf);
-
-//     EXPECT_EQ(sender_addr, source_addr);
-//     EXPECT_EQ(sender_port, source_port);
-// }
-
-// TEST_F(send_recv_test, recv_test4)
-// {
-//     // Tests iovec recv that doesn't return the source IP address
-
-//     const std::size_t bytes_sent = linuxpp::net::send(send_socket.descriptor(),
-//                                                       send_buf.data(),
-//                                                       send_buf.size(),
-//                                                       receiver_addr,
-//                                                       receiver_port);
-
-//     ASSERT_EQ(send_buf.size(), bytes_sent);
-//     const auto events = epoll.wait(std::chrono::seconds{5});
-//     ASSERT_FALSE(events.empty());
-
-//     const auto bytes_recv = recv_socket.recv(iovec.data(), iovec.size());
-
-//     ASSERT_EQ(bytes_sent, bytes_recv);
-//     EXPECT_EQ(send_buf, recv_buf);
-// }
-
-// TEST_F(send_recv_test, recv_test5)
-// {
-//     // Tests iovec recv that does return the source address and port
-
-//     const std::size_t bytes_sent = linuxpp::net::send(send_socket.descriptor(),
-//                                                       send_buf.data(),
-//                                                       send_buf.size(),
-//                                                       receiver_addr,
-//                                                       receiver_port);
-
-//     ASSERT_EQ(send_buf.size(), bytes_sent);
-//     const auto events = epoll.wait(std::chrono::seconds{5});
-//     ASSERT_FALSE(events.empty());
-
-//     ndgpp::net::ipv4_address addr;
-//     ndgpp::net::port port;
-//     const auto bytes_recv = recv_socket.recv(iovec.data(), iovec.size(), addr, port);
-
-//     ASSERT_EQ(bytes_sent, bytes_recv);
-//     EXPECT_EQ(send_buf, recv_buf);
-//     EXPECT_EQ(sender_addr, addr);
-//     EXPECT_EQ(sender_port, port);
-// }
-
-// TEST_F(send_recv_test, recv_test6)
-// {
-//     // Tests iovec recv that does return a sockaddr_in
-
-//     const std::size_t bytes_sent = linuxpp::net::send(send_socket.descriptor(),
-//                                                       send_buf.data(),
-//                                                       send_buf.size(),
-//                                                       receiver_addr,
-//                                                       receiver_port);
-
-//     ASSERT_EQ(send_buf.size(), bytes_sent);
-//     const auto events = epoll.wait(std::chrono::seconds{5});
-//     ASSERT_FALSE(events.empty());
-
-//     struct ::sockaddr_in sockaddr;
-//     const auto bytes_recv = recv_socket.recv(iovec.data(), iovec.size(), sockaddr);
-
-//     ASSERT_EQ(bytes_sent, bytes_recv);
-//     EXPECT_EQ(send_buf, recv_buf);
-
-//     ndgpp::net::ipv4_address addr;
-//     ndgpp::net::port port;
-
-//     std::tie(addr, port) = linuxpp::net::parse_sockaddr(sockaddr);
-//     EXPECT_EQ(sender_addr, addr);
-//     EXPECT_EQ(sender_port, port);
-// }
+    const std::size_t ret = linuxpp::net::recv(server_client_sd, recv_buf.data(), recv_buf.size(), MSG_WAITALL);
+    ASSERT_EQ(recv_buf.size(), ret);
+    EXPECT_EQ(send_buf, recv_buf);
+}
