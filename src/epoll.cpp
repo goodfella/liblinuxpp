@@ -173,4 +173,6 @@ void linuxpp::epoll::wait(std::vector<epoll_event>& events, const int timeout)
                           std::error_code{errno, std::system_category()},
                           "epoll_wait failed");
     }
+
+    events.resize(static_cast<std::size_t>(ret));
 }
