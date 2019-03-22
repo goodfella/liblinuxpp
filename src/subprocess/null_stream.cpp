@@ -11,7 +11,7 @@ linuxpp::subprocess::null_stream::~null_stream() {}
 
 linuxpp::subprocess::stream_descriptors linuxpp::subprocess::null_stream::open() const
 {
-    return linuxpp::subprocess::stream_descriptors {linuxpp::open("/dev/null",
-                                                                  O_RDWR,
-                                                                  linuxpp::no_cloexec)};
+    return linuxpp::subprocess::stream_descriptors {linuxpp::open(linuxpp::nocloexec,
+                                                                  "/dev/null",
+                                                                  O_RDWR)};
 }

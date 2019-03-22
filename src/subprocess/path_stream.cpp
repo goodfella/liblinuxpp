@@ -11,7 +11,7 @@
 #include <liblinuxpp/subprocess/path_stream.hpp>
 #include <liblinuxpp/file_descriptor.hpp>
 #include <liblinuxpp/open.hpp>
-#include <liblinuxpp/no_cloexec.hpp>
+#include <liblinuxpp/nocloexec.hpp>
 
 linuxpp::subprocess::path_stream::path_stream(const std::string& path):
     path_(path)
@@ -26,7 +26,7 @@ const std::string& linuxpp::subprocess::path_stream::path() const noexcept
 
 linuxpp::subprocess::stream_descriptors linuxpp::subprocess::path_stream::open() const
 {
-    return linuxpp::subprocess::stream_descriptors {linuxpp::open(path_.c_str(),
-                                                                  O_RDWR,
-                                                                  linuxpp::no_cloexec)};
+    return linuxpp::subprocess::stream_descriptors {linuxpp::open(linuxpp::nocloexec,
+                                                                  path_.c_str(),
+                                                                  O_RDWR)};
 }

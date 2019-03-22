@@ -3,8 +3,8 @@
 
 namespace linuxpp
 {
-    struct no_cloexec_t {};
-    static const no_cloexec_t no_cloexec {};
+    struct nocloexec_t {};
+    static const nocloexec_t nocloexec {};
 }
 
 #endif

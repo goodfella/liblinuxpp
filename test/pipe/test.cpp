@@ -34,9 +34,9 @@ TEST(ctor, non_default)
     }
 }
 
-TEST(ctor, no_cloexec)
+TEST(ctor, nocloexec)
 {
-    linuxpp::pipe pipe(0, linuxpp::no_cloexec);
+    linuxpp::pipe pipe(linuxpp::nocloexec, 0);
     {
         const int ret = linuxpp::fcntl(pipe.read_fd().get(), F_GETFD);
         EXPECT_NE(ret, FD_CLOEXEC);
