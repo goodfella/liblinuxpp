@@ -4,7 +4,7 @@
 namespace linuxpp
 {
     struct nocloexec_t {};
-    static const nocloexec_t no_cloexec {};
+    static const nocloexec_t nocloexec {};
 }
 
 #endif

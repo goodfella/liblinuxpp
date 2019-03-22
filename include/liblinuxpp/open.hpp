@@ -21,7 +21,7 @@ namespace linuxpp
      *
      *  @throws ndgpp::error<std::system_error> in the case of error
      */
-    int open(linuxpp::nocloexec_t no_cloexec,
+    int open(linuxpp::nocloexec_t nocloexec,
              char const * const path,
              const int flags);
 
@@ -37,7 +37,7 @@ namespace linuxpp
      *
      *  @throws ndgpp::error<std::system_error> in the case of error
      */
-    int open(linuxpp::nocloexec_t no_cloexec,
+    int open(linuxpp::nocloexec_t nocloexec,
              char const * const path,
              const int flags,
              const int mode);
@@ -56,7 +56,7 @@ namespace linuxpp
      */
     std::tuple<int, std::error_code>
     open(std::nothrow_t no_throw,
-         linuxpp::nocloexec_t no_cloexec,
+         linuxpp::nocloexec_t nocloexec,
          char const * const path,
          const int flags);
 
