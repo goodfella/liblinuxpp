@@ -7,28 +7,28 @@
 #include <tuple>
 
 #include <libndgpp/error.hpp>
-#include <liblinuxpp/no_cloexec.hpp>
+#include <liblinuxpp/nocloexec.hpp>
 
 namespace linuxpp
 {
     /** Returns a file descriptor for the path, and flags provided
      *
      *  @param path The path to open
-     *  @param no_cloexec Do not add O_CLOEXEC to flags
+     *  @param nocloexec Do not add O_CLOEXEC to flags
      *  @param flags The flags parameter for the open system call
      *
      *  @return A valid file descriptor
      *
      *  @throws ndgpp::error<std::system_error> in the case of error
      */
-    int open(linuxpp::no_cloexec_t no_cloexec,
+    int open(linuxpp::nocloexec_t no_cloexec,
              char const * const path,
              const int flags);
 
 
     /** Returns a file descriptor for the path, flags, and mode provided
      *
-     *  @param no_cloexec Do not add O_CLOEXEC to flags
+     *  @param nocloexec Do not add O_CLOEXEC to flags
      *  @param path The path to open
      *  @param flags The flags parameter for the open system call
      *  @param mode The mode parameter for the open system call
@@ -37,7 +37,7 @@ namespace linuxpp
      *
      *  @throws ndgpp::error<std::system_error> in the case of error
      */
-    int open(linuxpp::no_cloexec_t no_cloexec,
+    int open(linuxpp::nocloexec_t no_cloexec,
              char const * const path,
              const int flags,
              const int mode);
@@ -46,7 +46,7 @@ namespace linuxpp
     /** Returns a file descriptor for the path, and flags provided
      *
      *  @param no_throw Do not throw an exception
-     *  @param no_cloexec Do not add O_CLOEXEC to flags
+     *  @param nocloexec Do not add O_CLOEXEC to flags
      *  @param path The path to open
      *  @param flags The flags parameter for the open system call
      *
@@ -56,7 +56,7 @@ namespace linuxpp
      */
     std::tuple<int, std::error_code>
     open(std::nothrow_t no_throw,
-         linuxpp::no_cloexec_t no_cloexec,
+         linuxpp::nocloexec_t no_cloexec,
          char const * const path,
          const int flags);
 
@@ -64,7 +64,7 @@ namespace linuxpp
     /** Returns a file descriptor for the path, flags and mode provided
      *
      *  @param no_throw Do not throw an exception
-     *  @param no_cloexec Do not add O_CLOEXEC to flags
+     *  @param nocloexec Do not add O_CLOEXEC to flags
      *  @param path The path to open
      *  @param flags The flags parameter for the open system call
      *  @param mode The mode parameter for the open system call
@@ -75,7 +75,7 @@ namespace linuxpp
      */
     std::tuple<int, std::error_code>
     open(std::nothrow_t,
-         linuxpp::no_cloexec_t,
+         linuxpp::nocloexec_t,
          char const * const path,
          const int flags,
          const int mode);

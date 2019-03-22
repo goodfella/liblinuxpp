@@ -8,11 +8,11 @@
 #include <libndgpp/error.hpp>
 
 #include <liblinuxpp/open.hpp>
-#include <liblinuxpp/no_cloexec.hpp>
+#include <liblinuxpp/nocloexec.hpp>
 
 std::tuple<int, std::error_code>
 linuxpp::open(std::nothrow_t,
-              linuxpp::no_cloexec_t,
+              linuxpp::nocloexec_t,
               char const * const path,
               const int flags,
               int mode)
@@ -22,12 +22,12 @@ linuxpp::open(std::nothrow_t,
     return std::make_tuple(ret, std::error_code {errno, std::system_category ()});
 }
 
-int linuxpp::open(linuxpp::no_cloexec_t,
+int linuxpp::open(linuxpp::nocloexec_t,
                   char const * const path,
                   const int flags,
                   int mode)
 {
-    const auto ret = linuxpp::open(std::nothrow, linuxpp::no_cloexec, path, flags, mode);
+    const auto ret = linuxpp::open(std::nothrow, linuxpp::nocloexec, path, flags, mode);
     const std::error_code error_code = std::get<std::error_code>(ret);
     if (error_code)
     {
@@ -41,35 +41,35 @@ int linuxpp::open(linuxpp::no_cloexec_t,
 
 std::tuple<int, std::error_code>
 linuxpp::open(std::nothrow_t,
-              linuxpp::no_cloexec_t,
+              linuxpp::nocloexec_t,
               char const * const path,
               const int flags)
 {
-    return linuxpp::open(std::nothrow, linuxpp::no_cloexec, path, flags, 0);
+    return linuxpp::open(std::nothrow, linuxpp::nocloexec, path, flags, 0);
 }
 
 int
-linuxpp::open(linuxpp::no_cloexec_t,
+linuxpp::open(linuxpp::nocloexec_t,
               char const * const path,
               const int flags)
 {
-    return linuxpp::open(linuxpp::no_cloexec, path, flags, 0);
+    return linuxpp::open(linuxpp::nocloexec, path, flags, 0);
 }
 
 int linuxpp::open(char const * const path, const int flags)
 {
-    return linuxpp::open(linuxpp::no_cloexec, path, flags | O_CLOEXEC);
+    return linuxpp::open(linuxpp::nocloexec, path, flags | O_CLOEXEC);
 }
 
 std::tuple<int, std::error_code>
 linuxpp::open(std::nothrow_t, char const * const path, const int flags)
 {
-    return linuxpp::open(std::nothrow, linuxpp::no_cloexec, path, flags | O_CLOEXEC);
+    return linuxpp::open(std::nothrow, linuxpp::nocloexec, path, flags | O_CLOEXEC);
 }
 
 int linuxpp::open(char const * const path, const int flags, const int mode)
 {
-    return linuxpp::open(linuxpp::no_cloexec, path, flags | O_CLOEXEC, mode);
+    return linuxpp::open(linuxpp::nocloexec, path, flags | O_CLOEXEC, mode);
 }
 
 std::tuple<int, std::error_code>
@@ -78,5 +78,5 @@ linuxpp::open(std::nothrow_t,
               const int flags,
               const int mode)
 {
-    return linuxpp::open(std::nothrow, linuxpp::no_cloexec, path, flags | O_CLOEXEC, mode);
+    return linuxpp::open(std::nothrow, linuxpp::nocloexec, path, flags | O_CLOEXEC, mode);
 }
