@@ -26,7 +26,7 @@ const std::string& linuxpp::subprocess::path_stream::path() const noexcept
 
 linuxpp::subprocess::stream_descriptors linuxpp::subprocess::path_stream::open() const
 {
-    return linuxpp::subprocess::stream_descriptors {linuxpp::open(path_.c_str(),
-                                                                  O_RDWR,
-                                                                  linuxpp::no_cloexec)};
+    return linuxpp::subprocess::stream_descriptors {linuxpp::open(linuxpp::no_cloexec,
+                                                                  path_.c_str(),
+                                                                  O_RDWR)};
 }
