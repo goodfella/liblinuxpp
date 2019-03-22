@@ -37,7 +37,7 @@ namespace linuxpp
      *
      *  @throw std::exception if an error is encountered
      */
-    std::array<int, 2> pipe_fd(int flags, linuxpp::no_cloexec_t);
+    std::array<int, 2> pipe_fd(linuxpp::no_cloexec_t, int flags);
 
 
     /** Returns a Linux pipe array with the O_CLOEXEC flag set
@@ -59,7 +59,7 @@ namespace linuxpp
      *
      *  @throw std::exception if an error is encountered
      */
-    std::array<unique_fd<>, 2> pipe_unique_fd(int flags, linuxpp::no_cloexec_t);
+    std::array<unique_fd<>, 2> pipe_unique_fd(linuxpp::no_cloexec_t, int flags);
 
     /// Represents a Linux pipe
     class pipe final
@@ -70,7 +70,7 @@ namespace linuxpp
         pipe(const int flags = 0);
 
         explicit
-        pipe(const int flags, linuxpp::no_cloexec_t);
+        pipe(linuxpp::no_cloexec_t, const int flags);
 
         ~pipe() = default;
 
