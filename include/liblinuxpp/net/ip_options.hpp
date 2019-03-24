@@ -1,5 +1,5 @@
-#ifndef LIBLINUXPP_NET_SOCKET_OPTIONS_HPP
-#define LIBLINUXPP_NET_SOCKET_OPTIONS_HPP
+#ifndef LIBLINUXPP_NET_IP_OPTIONS_HPP
+#define LIBLINUXPP_NET_IP_OPTIONS_HPP
 
 #include <sys/socket.h>
 #include <netinet/in.h>
