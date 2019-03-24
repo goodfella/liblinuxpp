@@ -113,7 +113,7 @@ namespace linuxpp
         };
 	
         using tuple_type = std::tuple<linuxpp::file_descriptor, closer_type>;
-        tuple_type members_;
+        tuple_type members_ = {};
     };
 
     template <class Closer>
