@@ -2,6 +2,9 @@
 #define LINUXPP_SYSCALL_RETURN_HPP
 
 #include <tuple>
+#include <stdexcept>
+
+#include <libndgpp/error.hpp>
 
 namespace linuxpp
 {
@@ -20,10 +23,12 @@ namespace linuxpp
         using value_type = T;
 
         /// Constructs a syscall_return object given its return value
+        explicit
         syscall_return(const T return_value) noexcept;
 
         /// Constructs a syscall_return object given the errno value
-        syscall_return(seterrno_t, int errno_value) noexcept;
+        explicit
+        syscall_return(seterrno_t, int errno_value);
 
         syscall_return(const syscall_return &) noexcept;
         syscall_return(syscall_return &&) noexcept;
@@ -66,9 +71,15 @@ namespace linuxpp
     {}
 
     template <class T>
-    syscall_return<T>::syscall_return(seterrno_t, int errno_value) noexcept:
+    syscall_return<T>::syscall_return(seterrno_t, int errno_value):
         members_{std::make_tuple(errno_value, T{})}
-    {}
+    {
+        if (errno_value == 0)
+        {
+            throw ndgpp_error(std::logic_error,
+                              "errno value cannot be 0");
+        }
+    }
 
     template <class T>
     syscall_return<T>::syscall_return(const syscall_return &) noexcept = default;

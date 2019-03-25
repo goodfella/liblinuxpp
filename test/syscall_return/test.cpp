@@ -1,7 +1,12 @@
 #include <cerrno>
 
+#include <stdexcept>
+
 #include <unistd.h>
 #include <gtest/gtest.h>
+
+#include <libndgpp/error.hpp>
+
 #include <liblinuxpp/syscall_return.hpp>
 
 TEST(ctor, return_overload)
@@ -25,4 +30,10 @@ TEST(ctor, errno_overload)
     EXPECT_TRUE(ret.fail());
 
     EXPECT_EQ(EINVAL, ret.errno_value());
+}
+
+TEST(ctor, bad_errno)
+{
+    auto throws = [] () {linuxpp::syscall_return<int> {linuxpp::seterrno, 0};};
+    EXPECT_THROW(throws(), ndgpp::error<std::logic_error>);
 }
