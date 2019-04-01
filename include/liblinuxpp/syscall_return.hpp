@@ -36,20 +36,20 @@ namespace linuxpp
         syscall_return & operator= (const syscall_return &) noexcept;
         syscall_return & operator= (syscall_return &&) noexcept;
 
-        /// Returns true if the syscall_return object was not constructed with an errno value
+        /// Returns true if the stored errno value is set to 0
         explicit
         operator bool() const noexcept;
 
         /// See bool operator
         bool good() const noexcept;
 
-        /// Returns true if the syscall_return object was constructed with an errno value
+        /// Returns true if the stored errno value is non-zero
         bool fail() const noexcept;
 
-        /// Returns the errno value stored in the syscall_return object
+        /// Returns the stored errno value
         int errno_value() const noexcept;
 
-        /// Returns the return value of the system call
+        /// Returns the return stored return value
         value_type return_value() const noexcept;
 
         private:
