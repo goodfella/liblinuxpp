@@ -57,64 +57,44 @@ linuxpp::pipe::pipe(pipe&&) noexcept = default;
 linuxpp::pipe&
 linuxpp::pipe::operator=(pipe&&) noexcept = default;
 
-std::size_t linuxpp::pipe::write(void const * const buf, const std::size_t size, int& errno_val) noexcept
+linuxpp::syscall_return<ssize_t>
+linuxpp::pipe::write(std::nothrow_t, void const * const buf, const std::size_t size) noexcept
 {
     const ssize_t ret = ::write(this->write_fd().get(), buf, size);
-    if (ret == -1)
-    {
-        errno_val = errno;
-        return 0;
-    }
-
-    return ret;
+    return linuxpp::syscall_return<ssize_t>{errno, ret};
 }
 
 std::size_t linuxpp::pipe::write(void const * const buf, const std::size_t size)
 {
-    const std::tuple<int, std::size_t> ret = [&](){
-        int errno_val = 0;
-        const std::size_t ret = this->write(buf, size, errno_val);
-        return std::make_tuple(errno_val, ret);
-    }();
-
-    if (std::get<0>(ret) != 0)
+    const auto ret = this->write(std::nothrow, buf, size);
+    if (!ret)
     {
         throw ndgpp_error(std::system_error,
-                          std::get<0>(ret),
+                          ret.errno_value(),
                           std::system_category(),
                           "write system call failed");
     }
 
-    return std::get<1>(ret);
+    return static_cast<std::size_t>(ret.return_value());
 }
 
-std::size_t linuxpp::pipe::read(void * const buf, const std::size_t size, int& errno_val) noexcept
+linuxpp::syscall_return<ssize_t>
+linuxpp::pipe::read(std::nothrow_t, void * const buf, const std::size_t size) noexcept
 {
     const ssize_t ret = ::read(this->read_fd().get(), buf, size);
-    if (ret == -1)
-    {
-        errno_val = errno;
-        return 0;
-    }
-
-    return ret;
+    return linuxpp::syscall_return<ssize_t>{errno, ret};
 }
 
 std::size_t linuxpp::pipe::read(void * const buf, const std::size_t size)
 {
-    const std::tuple<int, std::size_t> ret = [&](){
-        int errno_val = 0;
-        const std::size_t ret = this->read(buf, size, errno_val);
-        return std::make_tuple(errno_val, ret);
-    }();
-
-    if (std::get<0>(ret) != 0)
+    const auto ret = this->read(std::nothrow, buf, size);
+    if (!ret)
     {
         throw ndgpp_error(std::system_error,
-                          std::get<0>(ret),
+                          ret.errno_value(),
                           std::system_category(),
                           "read system call failed");
     }
 
-    return std::get<1>(ret);
+    return static_cast<std::size_t>(ret.return_value());
 }

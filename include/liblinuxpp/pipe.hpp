@@ -5,6 +5,7 @@
 #include <unistd.h>
 
 #include <array>
+#include <new>
 #include <tuple>
 #include <type_traits>
 #include <system_error>
@@ -13,6 +14,8 @@
 #include "nocloexec.hpp"
 #include <libndgpp/source_location.hpp>
 #include <libndgpp/error.hpp>
+
+#include <liblinuxpp/syscall_return.hpp>
 
 namespace linuxpp
 {
@@ -88,21 +91,29 @@ namespace linuxpp
         unique_fd<>& read_fd() noexcept;
         unique_fd<>& write_fd() noexcept;
 
-        std::size_t write(void const * const buf, const std::size_t size, int& errno_val) noexcept;
+        linuxpp::syscall_return<ssize_t>
+        write(std::nothrow_t, void const * const buf, const std::size_t size) noexcept;
+
         std::size_t write(void const * const buf, const std::size_t size);
 
-        std::size_t read(void * const buf, const std::size_t size, int& errno_val) noexcept;
+        linuxpp::syscall_return<ssize_t>
+        read(std::nothrow_t, void * const buf, const std::size_t size) noexcept;
+
         std::size_t read(void * const buf, const std::size_t size);
 
         template <class T>
-        auto write(const T& obj, int& errno_value) noexcept -> typename std::enable_if<std::is_pod<T>::value>::type;
+        auto
+        write(std::nothrow_t, const T& obj) noexcept ->
+            typename std::enable_if<std::is_pod<T>::value, linuxpp::syscall_return<ssize_t>>::type;
 
         template <class T>
         auto write(const T& obj) -> typename std::enable_if<std::is_pod<T>::value>::type;
 
 
         template <class T>
-        auto read(int& errno_value) noexcept -> typename std::enable_if<std::is_pod<T>::value, T>::type;
+        auto
+        read(std::nothrow_t) noexcept ->
+            typename std::enable_if<std::is_pod<T>::value, linuxpp::syscall_return<T>>::type;
 
         template <class T>
         auto read() -> typename std::enable_if<std::is_pod<T>::value, T>::type;
@@ -142,81 +153,71 @@ inline linuxpp::unique_fd<>& linuxpp::pipe::write_fd() noexcept
 }
 
 template <class T>
-auto linuxpp::pipe::write(const T& obj, int& errno_val) noexcept -> typename std::enable_if<std::is_pod<T>::value>::type
+auto linuxpp::pipe::write(std::nothrow_t, const T& obj) noexcept ->
+    typename std::enable_if<std::is_pod<T>::value, linuxpp::syscall_return<ssize_t>>::type
 {
-    const std::size_t ret = this->write(&obj, sizeof(obj), errno_val);
-    if (errno_val != 0)
+    const auto ret = this->write(std::nothrow, obj, sizeof(obj));
+    if (!ret || ret.return_value() != sizeof(obj))
     {
-        // If an error was encountered return its errno value
-        return;
+        return linuxpp::syscall_return<ssize_t>(EAGAIN, ret.return_value());
     }
 
-    if (ret != sizeof(obj))
-    {
-        // an error wasn't encountered, but for some reason the full
-        // object was not written
-        errno_val = EAGAIN;
-    }
+    return linuxpp::syscall_return<ssize_t>(0, ret.return_value());
 }
 
 template <class T>
 auto linuxpp::pipe::write(const T& obj) -> typename std::enable_if<std::is_pod<T>::value>::type
 {
-    const int errno_val = [&](){
-        int errno_val = 0;
-        this->write(obj, errno_val);
-        return errno_val;
-    }();
-
-    if (errno_val != 0)
+    const auto ret = this->write(std::nothrow, obj);
+    if (!ret)
     {
         throw ndgpp_error(std::system_error,
-                          errno_val,
+                          ret.errno_value(),
                           std::system_category(),
                           "object write failed");
+    }
+
+    if (ret.return_value() != sizeof(obj))
+    {
+        throw ndgpp_error(std::system_error,
+                          EAGAIN,
+                          std::system_category(),
+                          "partial object write");
     }
 }
 
 template <class T>
-auto linuxpp::pipe::read(int& errno_val) noexcept -> typename std::enable_if<std::is_pod<T>::value, T>::type
+auto linuxpp::pipe::read(std::nothrow_t) noexcept ->
+    typename std::enable_if<std::is_pod<T>::value, linuxpp::syscall_return<T>>::type
 {
-    const std::tuple<T, std::size_t> ret = [&](){
-        T t;
-        const std::size_t ret = this->read(&t, sizeof(t), errno_val);
-        return std::make_tuple(t, ret);
-    }();
-
-    if (errno_val != 0)
+    T t;
+    const auto ret = this->read(std::nothrow, &t, sizeof(t));
+    if (!ret)
     {
-        return std::get<1>(ret);
+        return linuxpp::syscall_return<T>(linuxpp::seterrno, ret.errno_value());
     }
 
-    if (std::get<1>(ret) != sizeof(T))
+    if (ret.return_value() != sizeof(t))
     {
-        errno_val = EAGAIN;
+        return linuxpp::syscall_return<T>(linuxpp::seterrno, ENODATA);
     }
 
-    return std::get<1>(ret);
+    return ret;
 }
 
 template <class T>
 inline auto linuxpp::pipe::read() -> typename std::enable_if<std::is_pod<T>::value, T>::type
 {
-    const std::tuple<int, T> ret = [&](){
-        int errno_val = 0;
-        const T t = this->read<T>(errno_val);
-        return std::make_tuple(errno_val, t);
-    }();
-
-    if (std::get<0>(ret) != 0)
+    const auto ret = this->read<T>(std::nothrow);
+    if (!ret)
     {
         throw ndgpp_error(std::system_error,
-                          std::get<0>(ret),
+                          ret.errno_value(),
                           std::system_category(),
-                          "object read failed");
+                          "failed to read object");
     }
 
-    return std::get<1>(ret);
+    return ret.return_value();
 }
 
 inline void linuxpp::pipe::swap(linuxpp::pipe& other) noexcept
