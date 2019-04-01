@@ -66,7 +66,7 @@ namespace linuxpp
     };
 
     template <class T>
-    syscall_return<T>::syscall_return(const T return_value) noexcept:
+    inline syscall_return<T>::syscall_return(const T return_value) noexcept:
         members_{std::make_tuple(0, return_value)}
     {}
 
@@ -94,31 +94,31 @@ namespace linuxpp
     syscall_return<T> & syscall_return<T>::operator= (syscall_return &&) noexcept = default;
 
     template <class T>
-    syscall_return<T>::operator bool() const noexcept
+    inline syscall_return<T>::operator bool() const noexcept
     {
         return std::get<errno_member>(this->members_) == 0;
     }
 
     template <class T>
-    bool syscall_return<T>::good() const noexcept
+    inline bool syscall_return<T>::good() const noexcept
     {
         return static_cast<bool>(*this) == true;
     }
 
     template <class T>
-    bool syscall_return<T>::fail() const noexcept
+    inline bool syscall_return<T>::fail() const noexcept
     {
         return static_cast<bool>(*this) == false;
     }
 
     template <class T>
-    T syscall_return<T>::return_value() const noexcept
+    inline T syscall_return<T>::return_value() const noexcept
     {
         return std::get<return_member>(this->members_);
     }
 
     template <class T>
-    int syscall_return<T>::errno_value() const noexcept
+    inline int syscall_return<T>::errno_value() const noexcept
     {
         return std::get<errno_member>(this->members_);
     }
