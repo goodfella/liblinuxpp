@@ -8,6 +8,7 @@
 
 #include <libndgpp/error.hpp>
 #include <liblinuxpp/nocloexec.hpp>
+#include <liblinuxpp/syscall_return.hpp>
 
 namespace linuxpp
 {
@@ -50,11 +51,11 @@ namespace linuxpp
      *  @param path The path to open
      *  @param flags The flags parameter for the open system call
      *
-     *  @return A std::tuple containing a file descriptor and an errno value
+     *  @return A syscall_return<int> that contains the file descriptor
      *
      *  @throws nothing
      */
-    std::tuple<int, std::error_code>
+    linuxpp::syscall_return<int>
     open(std::nothrow_t no_throw,
          linuxpp::nocloexec_t nocloexec,
          char const * const path,
@@ -69,11 +70,11 @@ namespace linuxpp
      *  @param flags The flags parameter for the open system call
      *  @param mode The mode parameter for the open system call
      *
-     *  @return std::tuple containing a file descriptor and an errno value
+     *  @return linuxpp::syscall_return<int> that contains the fd
      *
      *  @throws nothing
      */
-    std::tuple<int, std::error_code>
+    linuxpp::syscall_return<int>
     open(std::nothrow_t,
          linuxpp::nocloexec_t,
          char const * const path,
@@ -99,11 +100,11 @@ namespace linuxpp
      *  @param flags The flags parameter for the open system call
      *  @param errno_value The value of errno when an error is encountered
      *
-     *  @return std::tuple containing a file descriptor and an errno value
+     *  @return linuxpp::syscall_return<int> with the file descriptor
      *
      *  @throws nothing
      */
-    std::tuple<int, std::error_code>
+    linuxpp::syscall_return<int>
     open(std::nothrow_t nothrow, char const * const path, const int flags);
 
 
@@ -127,14 +128,15 @@ namespace linuxpp
      *  @param flags The flags parameter for the open system call
      *  @param mode The mode parameter for the open system call
      *
-     *  @return std::tuple containing a file descriptor and an errno value
+     *  @return linuxpp::syscall_return<int> that contains the fd
      *
      *  @throws nothing
      */
-    std::tuple<int, std::error_code> open(std::nothrow_t,
-                                          char const * const path,
-                                          const int flags,
-                                          const int mode);
+    linuxpp::syscall_return<int>
+    open(std::nothrow_t,
+         char const * const path,
+         const int flags,
+         const int mode);
 }
 
 #endif

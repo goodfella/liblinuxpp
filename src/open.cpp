@@ -10,7 +10,7 @@
 #include <liblinuxpp/open.hpp>
 #include <liblinuxpp/nocloexec.hpp>
 
-std::tuple<int, std::error_code>
+linuxpp::syscall_return<int>
 linuxpp::open(std::nothrow_t,
               linuxpp::nocloexec_t,
               char const * const path,
@@ -19,7 +19,7 @@ linuxpp::open(std::nothrow_t,
 {
     errno = 0;
     const int ret = ::open(path, flags, mode);
-    return std::make_tuple(ret, std::error_code {errno, std::system_category ()});
+    return linuxpp::syscall_return<int>{errno, ret};
 }
 
 int linuxpp::open(linuxpp::nocloexec_t,
@@ -28,18 +28,17 @@ int linuxpp::open(linuxpp::nocloexec_t,
                   int mode)
 {
     const auto ret = linuxpp::open(std::nothrow, linuxpp::nocloexec, path, flags, mode);
-    const std::error_code error_code = std::get<std::error_code>(ret);
-    if (error_code)
+    if (!ret)
     {
         throw ndgpp_error(std::system_error,
-                          error_code,
+                          std::error_code{ret.errno_value(), std::system_category()},
                           path != nullptr ? path : "path is null");
     }
 
-    return std::get<int>(ret);
+    return ret.return_value();
 }
 
-std::tuple<int, std::error_code>
+linuxpp::syscall_return<int>
 linuxpp::open(std::nothrow_t,
               linuxpp::nocloexec_t,
               char const * const path,
@@ -61,7 +60,7 @@ int linuxpp::open(char const * const path, const int flags)
     return linuxpp::open(linuxpp::nocloexec, path, flags | O_CLOEXEC);
 }
 
-std::tuple<int, std::error_code>
+linuxpp::syscall_return<int>
 linuxpp::open(std::nothrow_t, char const * const path, const int flags)
 {
     return linuxpp::open(std::nothrow, linuxpp::nocloexec, path, flags | O_CLOEXEC);
@@ -72,7 +71,7 @@ int linuxpp::open(char const * const path, const int flags, const int mode)
     return linuxpp::open(linuxpp::nocloexec, path, flags | O_CLOEXEC, mode);
 }
 
-std::tuple<int, std::error_code>
+linuxpp::syscall_return<int>
 linuxpp::open(std::nothrow_t,
               char const * const path,
               const int flags,
