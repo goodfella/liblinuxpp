@@ -28,7 +28,11 @@ namespace linuxpp
 
         /// Constructs a syscall_return object given the errno value
         explicit
-        syscall_return(seterrno_t, int errno_value);
+        syscall_return(seterrno_t, const int errno_value);
+
+        /// Constructs a syscall_return object given the errno value and the return value
+        explicit
+        syscall_return(const int errno_value, const T return_value) noexcept;
 
         syscall_return(const syscall_return &) noexcept;
         syscall_return(syscall_return &&) noexcept;
@@ -71,7 +75,7 @@ namespace linuxpp
     {}
 
     template <class T>
-    syscall_return<T>::syscall_return(seterrno_t, int errno_value):
+    syscall_return<T>::syscall_return(seterrno_t, const int errno_value):
         members_{std::make_tuple(errno_value, T{})}
     {
         if (errno_value == 0)
@@ -80,6 +84,11 @@ namespace linuxpp
                               "errno value cannot be 0");
         }
     }
+
+    template <class T>
+    syscall_return<T>::syscall_return(const int errno_value, const T return_value) noexcept:
+        members_{std::make_tuple(errno_value, return_value)}
+    {}
 
     template <class T>
     syscall_return<T>::syscall_return(const syscall_return &) noexcept = default;
