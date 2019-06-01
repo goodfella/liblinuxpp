@@ -149,6 +149,35 @@ namespace net
          */
         std::size_t recv(std::vector<unsigned char> & buf, const int flags = 0);
 
+        struct receive_state
+        {
+            friend class tcp_datagram_socket;
+
+            enum class state_type
+            {
+                receiving_msg_size,
+                receiving_msg,
+                finished
+            };
+
+            std::size_t msg_size;
+            std::size_t bytes_received;
+            state_type state;
+
+            private:
+            receive_state():
+                msg_size(0),
+                bytes_received(0),
+                state(state_type::receiving_msg_size)
+            {}
+        };
+
+        receive_state recv_part(const int flags = 0);
+
+        receive_state recv_part(std::vector<unsigned char> & buf,
+                                const receive_state state,
+                                const int flags = 0);
+
         /** Calls sendto system call
          *
          *  @param buf The buffer of data to send
@@ -184,6 +213,13 @@ namespace net
         };
 
         using tuple_type = std::tuple<linuxpp::net::tcp_socket, std::vector<struct ::iovec>>;
+
+        receive_state recv_size_part(const receive_state state,
+                                     const int flags);
+
+        receive_state recv_msg_part(std::vector<unsigned char> & buf,
+                                    const receive_state state,
+                                    const int flags);
 
         tuple_type members_ = {};
     };

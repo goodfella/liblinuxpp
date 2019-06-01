@@ -45,8 +45,8 @@ linuxpp::net::tcp_datagram_socket::tcp_datagram_socket(linuxpp::net::bind_socket
 }
 
 linuxpp::net::tcp_datagram_socket::tcp_datagram_socket(linuxpp::net::connect_socket_t do_connect,
-                                     const ndgpp::net::ipv4_address address,
-                                     const ndgpp::net::port port):
+                                                       const ndgpp::net::ipv4_address address,
+                                                       const ndgpp::net::port port):
     linuxpp::net::tcp_datagram_socket(AF_INET)
 {
     std::get<socket>(this->members_).connect(address, port);
@@ -136,6 +136,93 @@ std::size_t linuxpp::net::tcp_datagram_socket::recv(std::vector<unsigned char> &
     }
 
     return ret;
+}
+
+linuxpp::net::tcp_datagram_socket::receive_state
+linuxpp::net::tcp_datagram_socket::recv_size_part(const linuxpp::net::tcp_datagram_socket::receive_state state,
+                                                  const int flags)
+{
+    linuxpp::net::tcp_datagram_socket::receive_state new_state {state};
+    std::array<std::uint8_t, 4> network_byte_order_msg_size;
+
+    new_state.bytes_received += std::get<socket>(this->members_).recv(network_byte_order_msg_size.data() + state.bytes_received,
+                                                                      network_byte_order_msg_size.size() - state.bytes_received,
+                                                                      flags | MSG_DONTWAIT);
+
+    for(std::size_t i = state.bytes_received; i < new_state.bytes_received; ++i)
+    {
+        new_state.msg_size |=
+            static_cast<std::size_t>(network_byte_order_msg_size[i]) << ((3 - i) * 8);
+
+    }
+
+    if (new_state.bytes_received != network_byte_order_msg_size.size())
+    {
+        // The full message size was not received, so return the
+        // current state
+        return new_state;
+    }
+
+    new_state.state =
+        linuxpp::net::tcp_datagram_socket::receive_state::state_type::receiving_msg;
+    return new_state;
+}
+
+linuxpp::net::tcp_datagram_socket::receive_state
+linuxpp::net::tcp_datagram_socket::recv_msg_part(std::vector<unsigned char> & buf,
+                                                 const linuxpp::net::tcp_datagram_socket::receive_state state,
+                                                 const int flags)
+{
+    linuxpp::net::tcp_datagram_socket::receive_state new_state {state};
+    new_state.bytes_received += std::get<socket>(this->members_).recv(buf.data() + state.bytes_received,
+                                                                      buf.size() - state.bytes_received,
+                                                                      flags | MSG_DONTWAIT);
+
+    if (new_state.bytes_received != new_state.msg_size)
+    {
+        return new_state;
+    }
+
+    new_state.state = linuxpp::net::tcp_datagram_socket::receive_state::state_type::finished;
+    return new_state;
+}
+
+linuxpp::net::tcp_datagram_socket::receive_state
+linuxpp::net::tcp_datagram_socket::recv_part(const int flags)
+{
+    return this->recv_size_part(linuxpp::net::tcp_datagram_socket::receive_state {}, flags);
+}
+
+linuxpp::net::tcp_datagram_socket::receive_state
+linuxpp::net::tcp_datagram_socket::recv_part(std::vector<unsigned char> & buf,
+                                             const linuxpp::net::tcp_datagram_socket::receive_state state,
+                                             const int flags)
+{
+    if (state.state == linuxpp::net::tcp_datagram_socket::receive_state::state_type::receiving_msg_size)
+    {
+        const auto new_state = this->recv_size_part(state, flags);
+        if (new_state.state == linuxpp::net::tcp_datagram_socket::receive_state::state_type::receiving_msg)
+        {
+            buf.resize(new_state.msg_size);
+        }
+
+        return new_state;
+    }
+    else if (state.state == linuxpp::net::tcp_datagram_socket::receive_state::state_type::receiving_msg)
+    {
+        return this->recv_msg_part(buf, state, flags);
+    }
+    else
+    {
+        const auto new_state = this->recv_size_part(linuxpp::net::tcp_datagram_socket::receive_state {},
+                                                    flags);
+        if (new_state.state == linuxpp::net::tcp_datagram_socket::receive_state::state_type::receiving_msg)
+        {
+            buf.resize(new_state.msg_size);
+        }
+
+        return new_state;
+    }
 }
 
 std::size_t linuxpp::net::tcp_datagram_socket::send(void const * const buf,
