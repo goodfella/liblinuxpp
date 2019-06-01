@@ -6,6 +6,7 @@
 
 #include <libndgpp/error.hpp>
 
+#include <liblinuxpp/iovec.hpp>
 #include <liblinuxpp/net/accept.hpp>
 #include <liblinuxpp/net/bind.hpp>
 #include <liblinuxpp/net/connect.hpp>
@@ -141,14 +142,11 @@ std::size_t linuxpp::net::tcp_datagram_socket::send(void const * const buf,
                                                     const std::size_t length,
                                                     const int flags)
 {
-    std::array<struct ::iovec, 2> iovec_array;
-
     const msg_size_type network_byte_order_length = htons(static_cast<uint16_t>(length));
-    iovec_array[0].iov_base = const_cast<msg_size_type *>(&network_byte_order_length);
-    iovec_array[0].iov_len = sizeof(network_byte_order_length);
-
-    iovec_array[1].iov_base = const_cast<void *>(buf);
-    iovec_array[1].iov_len = length;
+    const auto iovec_array =
+        linuxpp::make_iovec_array_const(std::make_pair(&network_byte_order_length,
+                                                       sizeof(network_byte_order_length)),
+                                        std::make_pair(buf, length));
 
     return std::get<socket>(this->members_).send(iovec_array.data(),
                                                  iovec_array.size(),
