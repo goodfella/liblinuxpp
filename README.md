@@ -7,13 +7,13 @@ programming for a Linux system much easier.
 The library is composed of helper functions and objects including but
 not limited to:
 
-- General
+- **General**
   - [linuxpp::open](include/liblinuxpp/open.hpp)
   - [linuxpp::unique_fd](include/liblinuxpp/unique_fd.hpp)
   - [linuxpp::pipe](include/liblinuxpp/pipe.hpp)
-- Subprocess Management
+- **Subprocess Management**
   - [linuxpp::subprocess::popen](include/liblinuxpp/subprocess/popen.hpp)
-- Networking
+- **Networking**
   - [linuxpp::net::udp_socket](include/liblinuxpp/net/udp_socket.hpp)
   - [linuxpp::net::tcp_socket](include/liblinuxpp/net/tcp_socket.hpp)
   - [linuxpp::net::tcp_datagram_socket](include/liblinuxpp/net/tcp_datagram_socket.hpp)
