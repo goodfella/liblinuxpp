@@ -178,6 +178,7 @@ linuxpp::net::tcp_datagram_socket::recv_size_part(const linuxpp::net::tcp_datagr
 
     new_state.state =
         linuxpp::net::tcp_datagram_socket::receive_state::state_type::receiving_msg;
+    new_state.bytes_received = 0;
     return new_state;
 }
 

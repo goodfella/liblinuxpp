@@ -317,3 +317,58 @@ TEST_F(send_recv_test, recv_part_msg_size_piecewise)
     EXPECT_EQ(msg_size, final_recv_state.msg_size);
     EXPECT_TRUE(data.empty());
 }
+
+TEST_F(send_recv_test, recv_part_msg_onshot)
+{
+    linuxpp::net::send(server_client_sd, send_iovec.data(), send_iovec.size());
+    const auto events = epoll.wait(std::chrono::seconds(5));
+
+    ASSERT_EQ(1U, events.size());
+    ASSERT_EQ(client_socket.descriptor(), events[0].data.fd);
+
+    const auto initial_recv_state = client_socket.recv_part();
+    ASSERT_EQ(linuxpp::net::tcp_datagram_socket::receive_state::state_type::receiving_msg, initial_recv_state.state);
+    ASSERT_EQ(send_buf.size(), initial_recv_state.msg_size);
+
+    std::vector<unsigned char> data;
+    const auto final_recv_state = client_socket.recv_part(data, initial_recv_state);
+
+    ASSERT_EQ(linuxpp::net::tcp_datagram_socket::receive_state::state_type::finished, final_recv_state.state);
+    ASSERT_EQ(send_buf.size(), data.size());
+    EXPECT_TRUE(std::equal(send_buf.cbegin(), send_buf.cend(), data.cbegin()));
+}
+
+TEST_F(send_recv_test, recv_part_msg_piecewise)
+{
+    std::array<unsigned char, 3> msg = {{0xa, 0xb, 0xc}};
+    const std::uint16_t nbo_msg_size = htons(static_cast<std::uint16_t>(msg.size()));
+
+    linuxpp::net::send(server_client_sd, &nbo_msg_size, sizeof(nbo_msg_size));
+
+    {
+        const auto events = epoll.wait(std::chrono::seconds(5));
+
+        ASSERT_EQ(1U, events.size());
+        ASSERT_EQ(client_socket.descriptor(), events[0].data.fd);
+    }
+
+    auto recv_state = client_socket.recv_part();
+    ASSERT_EQ(linuxpp::net::tcp_datagram_socket::receive_state::state_type::receiving_msg, recv_state.state);
+    ASSERT_EQ(msg.size(), recv_state.msg_size);
+
+    std::vector<unsigned char> data;
+    for (std::size_t i = 0; i < msg.size(); ++i)
+    {
+        linuxpp::net::send(server_client_sd, &msg[i], 1);
+        const auto events = epoll.wait(std::chrono::seconds(5));
+
+        ASSERT_EQ(1U, events.size());
+        ASSERT_EQ(client_socket.descriptor(), events[0].data.fd);
+
+        recv_state = client_socket.recv_part(data, recv_state);
+        ASSERT_EQ(i + 1, recv_state.bytes_received);
+        ASSERT_EQ(msg[i], data[i]);
+    }
+
+    EXPECT_EQ(linuxpp::net::tcp_datagram_socket::receive_state::state_type::finished, recv_state.state);
+}
