@@ -64,6 +64,16 @@ namespace linuxpp
      *  @{
      */
 
+
+    template <class T>
+    struct ::iovec make_iovec(const T & elements);
+
+    template <class T>
+    struct ::iovec make_iovec(const T && elements) = delete;
+
+    template <class T>
+    struct ::iovec make_iovec(T && elements) = delete;
+
     template <class T>
     struct ::iovec make_iovec(T * const elements,
                               const std::size_t size_elements);
@@ -132,6 +142,15 @@ namespace linuxpp
      */
 
     template <class T>
+    struct ::iovec make_iovec_const(const T& elements);
+
+    template <class T>
+    struct ::iovec make_iovec_const(const T&& elements) = delete;
+
+    template <class T>
+    struct ::iovec make_iovec_const(T * const elements,
+                                    const std::size_t size_elements);
+    template <class T>
     struct ::iovec make_iovec_const(T const * const elements,
                                     const std::size_t size_elements);
 
@@ -141,6 +160,9 @@ namespace linuxpp
 
     template <class T>
     struct ::iovec make_iovec_const(const std::vector<T> & vector);
+
+    template <class T>
+    struct ::iovec make_iovec_const (std::pair<T *, std::size_t> pair);
 
     template <class T>
     struct ::iovec make_iovec_const (std::pair<T const *, std::size_t> pair);
@@ -402,6 +424,12 @@ inline struct ::iovec linuxpp::make_iovec(void * buf,
 }
 
 template <class T>
+inline struct ::iovec linuxpp::make_iovec(const T & buf)
+{
+    return linuxpp::make_iovec(static_cast<void *>(&buf), sizeof(T));
+}
+
+template <class T>
 inline struct ::iovec linuxpp::make_iovec(T * const buf,
                                           const std::size_t size_buf)
 {
@@ -454,6 +482,19 @@ inline struct ::iovec linuxpp::make_iovec_const(void const * const buf,
 }
 
 template <class T>
+inline struct ::iovec linuxpp::make_iovec_const(const T & buf)
+{
+    return linuxpp::make_iovec_const(static_cast<void const * const>(&buf), sizeof(T));
+}
+
+template <class T>
+inline struct ::iovec linuxpp::make_iovec_const(T * const buf,
+                                                const std::size_t size_buf)
+{
+    return linuxpp::make_iovec_const(static_cast<void const * const>(buf), sizeof(T) * size_buf);
+}
+
+template <class T>
 inline struct ::iovec linuxpp::make_iovec_const(T const * const buf,
                                                 const std::size_t size_buf)
 {
@@ -464,6 +505,12 @@ template <class T>
 inline struct ::iovec linuxpp::make_iovec_const(const std::vector<T> & vector)
 {
     return linuxpp::make_iovec_const(vector.data(), vector.size());
+}
+
+template <class T>
+inline struct ::iovec linuxpp::make_iovec_const(std::pair<T *, std::size_t> pair)
+{
+    return linuxpp::make_iovec_const(pair.first, pair.second);
 }
 
 template <class T>
