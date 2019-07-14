@@ -10,6 +10,7 @@
 #include <tuple>
 #include <utility>
 
+#include <liblinuxpp/file_descriptor.hpp>
 #include <liblinuxpp/net/socket.hpp>
 #include <libndgpp/net/ipv4_address.hpp>
 #include <libndgpp/net/port.hpp>
@@ -26,6 +27,12 @@ namespace net
 
         /// Constructs a tcp_socket object with no underlying socket
         tcp_socket() noexcept;
+
+        /** Constructs a tcp_socket object from a socket descriptor
+         *
+         *  @param sock_fd The socket descriptor to take ownership of
+         */
+        tcp_socket(linuxpp::file_descriptor && sock_fd) noexcept;
 
         /** Constructs a TCP socket using the specified domain
          *

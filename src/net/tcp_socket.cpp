@@ -20,6 +20,10 @@ linuxpp::net::tcp_socket::tcp_socket(const int domain):
     members_{linuxpp::unique_fd<>{linuxpp::net::socket(domain, SOCK_STREAM, 0)}}
 {}
 
+linuxpp::net::tcp_socket::tcp_socket(linuxpp::file_descriptor && sock_fd) noexcept:
+    members_{linuxpp::unique_fd<>{std::move(sock_fd.get())}}
+{}
+
 linuxpp::net::tcp_socket::tcp_socket(linuxpp::net::bind_socket_t do_bind,
                                      const ndgpp::net::ipv4_address address,
                                      const ndgpp::net::port port):
