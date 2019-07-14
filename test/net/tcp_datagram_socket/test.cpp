@@ -267,3 +267,53 @@ TEST_F(send_recv_test, send_buffer_test)
     ASSERT_EQ(ret, recv_buf.size());
     EXPECT_TRUE(std::equal(send_buf.cbegin(), send_buf.cend(), recv_buf.cbegin()));
 }
+
+TEST_F(send_recv_test, recv_part_msg_size_one_shot)
+{
+    linuxpp::net::send(server_client_sd, send_iovec.data(), send_iovec.size());
+    const auto events = epoll.wait(std::chrono::seconds(5));
+
+    ASSERT_EQ(1U, events.size());
+    ASSERT_EQ(client_socket.descriptor(), events[0].data.fd);
+
+    const auto recv_state = client_socket.recv_part();
+    ASSERT_EQ(linuxpp::net::tcp_datagram_socket::receive_state::state_type::receiving_msg, recv_state.state);
+    EXPECT_EQ(send_buf.size(), recv_state.msg_size);
+}
+
+TEST_F(send_recv_test, recv_part_msg_size_piecewise)
+{
+    const std::array<std::uint8_t, 2> msg_size_buf {{0xab, 0xbc}};
+    linuxpp::net::send(server_client_sd, &msg_size_buf[0], 1);
+
+    {
+        const auto events = epoll.wait(std::chrono::seconds(5));
+
+        ASSERT_EQ(1U, events.size());
+        ASSERT_EQ(client_socket.descriptor(), events[0].data.fd);
+    }
+
+    const auto initial_recv_state = client_socket.recv_part();
+    EXPECT_EQ(linuxpp::net::tcp_datagram_socket::receive_state::state_type::receiving_msg_size, initial_recv_state.state);
+
+    linuxpp::net::send(server_client_sd, &msg_size_buf[1], 1);
+
+    {
+        const auto events = epoll.wait(std::chrono::seconds(5));
+
+        ASSERT_EQ(1U, events.size());
+        ASSERT_EQ(client_socket.descriptor(), events[0].data.fd);
+    }
+
+    std::vector<unsigned char> data;
+    const auto final_recv_state = client_socket.recv_part(data, initial_recv_state);
+
+    ASSERT_EQ(linuxpp::net::tcp_datagram_socket::receive_state::state_type::receiving_msg, final_recv_state.state);
+
+    const std::uint16_t msg_size =
+        (static_cast<std::uint16_t>(msg_size_buf[0]) << 8) |
+        (static_cast<std::uint16_t>(msg_size_buf[1]));
+
+    EXPECT_EQ(msg_size, final_recv_state.msg_size);
+    EXPECT_TRUE(data.empty());
+}

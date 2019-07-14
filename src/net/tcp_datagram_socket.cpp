@@ -156,7 +156,7 @@ linuxpp::net::tcp_datagram_socket::recv_size_part(const linuxpp::net::tcp_datagr
                                                   const int flags)
 {
     linuxpp::net::tcp_datagram_socket::receive_state new_state {state};
-    std::array<std::uint8_t, 4> network_byte_order_msg_size;
+    std::array<std::uint8_t, sizeof(msg_size_type)> network_byte_order_msg_size;
 
     new_state.bytes_received += std::get<socket>(this->members_).recv(network_byte_order_msg_size.data() + state.bytes_received,
                                                                       network_byte_order_msg_size.size() - state.bytes_received,
@@ -165,7 +165,7 @@ linuxpp::net::tcp_datagram_socket::recv_size_part(const linuxpp::net::tcp_datagr
     for(std::size_t i = state.bytes_received; i < new_state.bytes_received; ++i)
     {
         new_state.msg_size |=
-            static_cast<std::size_t>(network_byte_order_msg_size[i]) << ((3 - i) * 8);
+            static_cast<msg_size_type>(network_byte_order_msg_size[i]) << (((sizeof(msg_size_type) - 1) - i) * 8);
 
     }
 
@@ -186,6 +186,7 @@ linuxpp::net::tcp_datagram_socket::recv_msg_part(std::vector<unsigned char> & bu
                                                  const linuxpp::net::tcp_datagram_socket::receive_state state,
                                                  const int flags)
 {
+    buf.resize(state.msg_size);
     linuxpp::net::tcp_datagram_socket::receive_state new_state {state};
     new_state.bytes_received += std::get<socket>(this->members_).recv(buf.data() + state.bytes_received,
                                                                       buf.size() - state.bytes_received,
@@ -214,11 +215,6 @@ linuxpp::net::tcp_datagram_socket::recv_part(std::vector<unsigned char> & buf,
     if (state.state == linuxpp::net::tcp_datagram_socket::receive_state::state_type::receiving_msg_size)
     {
         const auto new_state = this->recv_size_part(state, flags);
-        if (new_state.state == linuxpp::net::tcp_datagram_socket::receive_state::state_type::receiving_msg)
-        {
-            buf.resize(new_state.msg_size);
-        }
-
         return new_state;
     }
     else if (state.state == linuxpp::net::tcp_datagram_socket::receive_state::state_type::receiving_msg)
@@ -229,11 +225,6 @@ linuxpp::net::tcp_datagram_socket::recv_part(std::vector<unsigned char> & buf,
     {
         const auto new_state = this->recv_size_part(linuxpp::net::tcp_datagram_socket::receive_state {},
                                                     flags);
-        if (new_state.state == linuxpp::net::tcp_datagram_socket::receive_state::state_type::receiving_msg)
-        {
-            buf.resize(new_state.msg_size);
-        }
-
         return new_state;
     }
 }
