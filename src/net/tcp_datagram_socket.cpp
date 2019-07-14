@@ -20,15 +20,19 @@
 
 linuxpp::net::tcp_datagram_socket::tcp_datagram_socket() = default;
 
-linuxpp::net::tcp_datagram_socket::tcp_datagram_socket(linuxpp::net::tcp_socket && socket) noexcept:
-    members_{std::make_tuple(linuxpp::net::tcp_socket{std::move(socket)}, std::vector<struct ::iovec>{})}
-{}
+linuxpp::net::tcp_datagram_socket::tcp_datagram_socket(linuxpp::net::tcp_socket && sock) noexcept:
+    members_{std::make_tuple(linuxpp::net::tcp_socket{std::move(sock)}, std::vector<struct ::iovec>{})}
+{
+    linuxpp::net::setsockopt<linuxpp::net::so::tcp_nodelay>(std::get<socket>(this->members_).descriptor(), 1);
+}
 
 linuxpp::net::tcp_datagram_socket::tcp_datagram_socket(tcp_datagram_socket &&) noexcept = default;
 linuxpp::net::tcp_datagram_socket & linuxpp::net::tcp_datagram_socket::operator= (linuxpp::net::tcp_datagram_socket &&) noexcept = default;
+
 linuxpp::net::tcp_datagram_socket & linuxpp::net::tcp_datagram_socket::operator= (linuxpp::net::tcp_socket && rhs) noexcept
 {
     std::get<socket>(this->members_) = std::move(rhs);
+    linuxpp::net::setsockopt<linuxpp::net::so::tcp_nodelay>(std::get<socket>(this->members_).descriptor(), 1);
     return *this;
 }
 
