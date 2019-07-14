@@ -6,7 +6,7 @@
 
 inline epoll_event make_epoll_event(const int fd, const uint32_t events)
 {
-    epoll_event event;
+    epoll_event event = {};
     event.events = events;
     event.data.fd = fd;
     return event;
@@ -14,7 +14,7 @@ inline epoll_event make_epoll_event(const int fd, const uint32_t events)
 
 inline epoll_event make_epoll_event(const int fd, const uint32_t events, void * const context)
 {
-    epoll_event event;
+    epoll_event event = {};
     event.events = events;
     event.data.ptr = context;
     return event;
@@ -22,7 +22,7 @@ inline epoll_event make_epoll_event(const int fd, const uint32_t events, void * 
 
 inline epoll_event make_epoll_event(const int fd, const uint32_t events, const uint32_t context)
 {
-    epoll_event event;
+    epoll_event event = {};
     event.events = events;
     event.data.u32 = context;
     return event;
@@ -30,7 +30,7 @@ inline epoll_event make_epoll_event(const int fd, const uint32_t events, const u
 
 inline epoll_event make_epoll_event(const int fd, const uint32_t events, const uint64_t context)
 {
-    epoll_event event;
+    epoll_event event = {};
     event.events = events;
     event.data.u64 = context;
     return event;

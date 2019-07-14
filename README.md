@@ -13,6 +13,7 @@ not limited to:
 - [linuxpp::subprocess::popen](include/liblinuxpp/subprocess/popen.hpp)
 - [linuxpp::net::udp_socket](include/liblinuxpp/net/udp_socket.hpp)
 - [linuxpp::net::tcp_socket](include/liblinuxpp/net/tcp_socket.hpp)
+- [linuxpp::net::tcp_datagram_socket](include/liblinuxpp/net/tcp_datagram_socket.hpp)
 
 #### linuxpp::open
 
@@ -51,3 +52,8 @@ socket related functions such as bind.
 
 A resource owning class for TCP sockets.  This class provides member
 functions that facilitate implementing both TCP clients and servers.
+
+#### linuxpp::net::tcp_datagram_socket
+
+A wrapper around a TCP socket that faciliates sending and receiving of
+"datagrams" instead of a stream of bytes.
