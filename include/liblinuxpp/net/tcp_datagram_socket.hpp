@@ -192,7 +192,7 @@ namespace net
          *  @param flags The flags to pass to sendto see man 2 sendto
          */
         std::size_t send(void const * buf,
-                         const std::size_t length,
+                         const std::uint16_t length,
                          const int flags = 0);
 
         /** Calls sendmsg

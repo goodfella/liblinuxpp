@@ -239,13 +239,13 @@ linuxpp::net::tcp_datagram_socket::recv_part(std::vector<unsigned char> & buf,
 }
 
 std::size_t linuxpp::net::tcp_datagram_socket::send(void const * const buf,
-                                                    const std::size_t length,
+                                                    const std::uint16_t length,
                                                     const int flags)
 {
     const msg_size_type network_byte_order_length = htons(static_cast<uint16_t>(length));
     const auto iovec_array =
         linuxpp::make_iovec_array_const(network_byte_order_length,
-                                        std::make_pair(buf, length));
+                                        std::make_pair(buf, static_cast<size_t>(length)));
 
     return std::get<socket>(this->members_).send(iovec_array.data(),
                                                  iovec_array.size(),
