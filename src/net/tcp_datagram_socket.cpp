@@ -1,8 +1,9 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 
-#include <cstdint>
 #include <algorithm>
+#include <cstdint>
+#include <tuple>
 
 #include <libndgpp/error.hpp>
 
@@ -19,9 +20,17 @@
 
 linuxpp::net::tcp_datagram_socket::tcp_datagram_socket() = default;
 
+linuxpp::net::tcp_datagram_socket::tcp_datagram_socket(linuxpp::net::tcp_socket && socket) noexcept:
+    members_{std::make_tuple(linuxpp::net::tcp_socket{std::move(socket)}, std::vector<struct ::iovec>{})}
+{}
+
 linuxpp::net::tcp_datagram_socket::tcp_datagram_socket(tcp_datagram_socket &&) noexcept = default;
 linuxpp::net::tcp_datagram_socket & linuxpp::net::tcp_datagram_socket::operator= (linuxpp::net::tcp_datagram_socket &&) noexcept = default;
-
+linuxpp::net::tcp_datagram_socket & linuxpp::net::tcp_datagram_socket::operator= (linuxpp::net::tcp_socket && rhs) noexcept
+{
+    std::get<socket>(this->members_) = std::move(rhs);
+    return *this;
+}
 
 linuxpp::net::tcp_datagram_socket::tcp_datagram_socket(const int domain):
     members_{std::make_tuple(linuxpp::net::tcp_socket{domain}, std::vector<struct ::iovec>{})}
@@ -231,8 +240,7 @@ std::size_t linuxpp::net::tcp_datagram_socket::send(void const * const buf,
 {
     const msg_size_type network_byte_order_length = htons(static_cast<uint16_t>(length));
     const auto iovec_array =
-        linuxpp::make_iovec_array_const(std::make_pair(&network_byte_order_length,
-                                                       sizeof(network_byte_order_length)),
+        linuxpp::make_iovec_array_const(network_byte_order_length,
                                         std::make_pair(buf, length));
 
     return std::get<socket>(this->members_).send(iovec_array.data(),
@@ -248,7 +256,7 @@ std::size_t linuxpp::net::tcp_datagram_socket::send(struct ::iovec const * const
     iovecs.resize(size_buffers + 1);
 
     // Determine how big the message is
-    const std::size_t iovec_len_sum =
+    const msg_size_type iovec_len_sum =
         std::accumulate(buffers,
                         buffers + size_buffers,
                         0U,
