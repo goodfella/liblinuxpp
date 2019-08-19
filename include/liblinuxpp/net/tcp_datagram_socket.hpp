@@ -33,7 +33,7 @@ namespace net
 
         /// constructs a tcp_datagram_socket object from a tcp_socket
         explicit
-        tcp_datagram_socket(linuxpp::net::tcp_socket &&) noexcept;
+        tcp_datagram_socket(linuxpp::net::tcp_socket &&);
 
         /** Constructs a TCP socket using the specified domain
          *
@@ -82,7 +82,7 @@ namespace net
 
         tcp_datagram_socket & operator=(const tcp_datagram_socket &) = delete;
         tcp_datagram_socket & operator=(tcp_datagram_socket &&) noexcept;
-        tcp_datagram_socket & operator=(tcp_socket &&) noexcept;
+        tcp_datagram_socket & operator=(tcp_socket &&);
 
         /// Returns the underlying socket descriptor
         int descriptor() const noexcept;
