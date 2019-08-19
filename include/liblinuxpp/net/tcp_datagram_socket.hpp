@@ -10,13 +10,13 @@
 
 #include <tuple>
 #include <utility>
-#include <vector>
 
 #include <libndgpp/net/ipv4_address.hpp>
 #include <libndgpp/net/port.hpp>
 
 #include <liblinuxpp/net/socket.hpp>
 #include <liblinuxpp/net/tcp_socket.hpp>
+#include <liblinuxpp/length_prefixed_message.hpp>
 
 namespace linuxpp
 {
@@ -217,7 +217,7 @@ namespace net
             iovec_vector,
         };
 
-        using tuple_type = std::tuple<linuxpp::net::tcp_socket, std::vector<struct ::iovec>>;
+        using tuple_type = std::tuple<linuxpp::net::tcp_socket, linuxpp::length_prefixed_message_vector<msg_size_type>>;
 
         receive_state recv_size_part(const receive_state state,
                                      const int flags);
@@ -243,26 +243,8 @@ namespace net
     std::size_t linuxpp::net::tcp_datagram_socket::send(struct ::iovec const * const bufs,
                                                         const int flags)
     {
-        std::array<struct ::iovec, N + 1> iovec_array;
-
-        // Determine how big the message is
-        const std::size_t iovec_len_sum =
-            std::accumulate(bufs,
-                            bufs + N,
-                            0U,
-                            [] (const std::size_t val, const struct ::iovec iovec)
-                            {
-                                return val + iovec.iov_len;
-                            });
-
-        const msg_size_type msg_size = htons(static_cast<uint16_t>(iovec_len_sum));
-        iovec_array[0].iov_len = msg_size;
-        iovec_array[0].iov_base = const_cast<msg_size_type *>(&msg_size);
-
-        // Copy the message into the iovec array
-        std::copy(bufs, bufs + N, iovec_array.begin() + 1);
-
-        return std::get<socket>(this->members_).send(iovec_array.data(), iovec_array.size(), flags);
+        const linuxpp::length_prefixed_message_array<msg_size_type, N> msg {bufs};
+        return std::get<socket>(this->members_).send(msg.iovec().data(), msg.iovec().size(), flags);
     }
 }}
 

@@ -13,6 +13,7 @@
 #include <liblinuxpp/fcntl.hpp>
 #include <liblinuxpp/file_descriptor.hpp>
 #include <liblinuxpp/iovec.hpp>
+#include <liblinuxpp/length_prefixed_message.hpp>
 #include <liblinuxpp/net/ipv4_address.hpp>
 #include <liblinuxpp/net/recv.hpp>
 #include <liblinuxpp/net/send.hpp>
@@ -175,10 +176,12 @@ struct send_recv_test: public ::testing::Test
 {
     protected:
 
+    using msg_size_type = linuxpp::net::tcp_datagram_socket::msg_size_type;
+
     send_recv_test():
         server_socket {AF_INET},
         client_socket {AF_INET},
-        send_buf_size {htons(send_buf.size())}
+        msg_buf{send_buf.data(), static_cast<msg_size_type>(send_buf.size())}
     {
         server_socket.bind(linuxpp::net::inaddr_loopback);
         server_socket.listen(1);
@@ -193,9 +196,6 @@ struct send_recv_test: public ::testing::Test
         epoll.add(client_socket.descriptor(), EPOLLIN);
 
         std::tie(client_addr, client_port) = linuxpp::net::getsockname_ipv4(client_socket.descriptor());
-
-        send_iovec = linuxpp::make_iovec_array_const(send_buf_size,
-                                                     send_buf);
     }
 
     void SetUp() override
@@ -216,14 +216,13 @@ struct send_recv_test: public ::testing::Test
 
     using buffer_type = std::array<unsigned char, 5>;
     buffer_type send_buf = {{1,2,3,4,5}};
+    linuxpp::length_prefixed_message_buffer<msg_size_type> msg_buf;
     std::vector<unsigned char> recv_buf;
-    std::array<struct ::iovec, 2> send_iovec;
-    const std::uint16_t send_buf_size;
 };
 
 TEST_F(send_recv_test, recv_test)
 {
-    linuxpp::net::send(server_client_sd, send_iovec.data(), send_iovec.size());
+    linuxpp::net::send(server_client_sd, msg_buf.iovec().data(), msg_buf.iovec().size());
     const auto events = epoll.wait(std::chrono::seconds(5));
 
     ASSERT_EQ(1U, events.size());
@@ -238,8 +237,8 @@ TEST_F(send_recv_test, recv_test)
 
 TEST_F(send_recv_test, send_iovec_test)
 {
-    const auto iovec = linuxpp::make_iovec_array_const(send_buf);
-    server_client_socket.send(iovec.data(), iovec.size());
+    const auto iovec = linuxpp::make_iovec_const(send_buf);
+    server_client_socket.send(&iovec, 1U);
 
     const auto events = epoll.wait(std::chrono::seconds(5));
 
@@ -250,6 +249,7 @@ TEST_F(send_recv_test, send_iovec_test)
 
     ASSERT_NE(0U, ret);
     ASSERT_EQ(ret, recv_buf.size());
+    ASSERT_EQ(ret, send_buf.size());
     EXPECT_TRUE(std::equal(send_buf.cbegin(), send_buf.cend(), recv_buf.cbegin()));
 }
 
@@ -265,12 +265,13 @@ TEST_F(send_recv_test, send_buffer_test)
 
     ASSERT_NE(0U, ret);
     ASSERT_EQ(ret, recv_buf.size());
+    ASSERT_EQ(ret, send_buf.size());
     EXPECT_TRUE(std::equal(send_buf.cbegin(), send_buf.cend(), recv_buf.cbegin()));
 }
 
 TEST_F(send_recv_test, recv_part_msg_size_one_shot)
 {
-    linuxpp::net::send(server_client_sd, send_iovec.data(), send_iovec.size());
+    linuxpp::net::send(server_client_sd, msg_buf.iovec().data(), msg_buf.iovec().size());
     const auto events = epoll.wait(std::chrono::seconds(5));
 
     ASSERT_EQ(1U, events.size());
@@ -320,7 +321,7 @@ TEST_F(send_recv_test, recv_part_msg_size_piecewise)
 
 TEST_F(send_recv_test, recv_part_msg_onshot)
 {
-    linuxpp::net::send(server_client_sd, send_iovec.data(), send_iovec.size());
+    linuxpp::net::send(server_client_sd, msg_buf.iovec().data(), msg_buf.iovec().size());
     const auto events = epoll.wait(std::chrono::seconds(5));
 
     ASSERT_EQ(1U, events.size());

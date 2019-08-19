@@ -16,12 +16,13 @@
 #include <liblinuxpp/net/sockopt.hpp>
 #include <liblinuxpp/net/tcp_datagram_socket.hpp>
 #include <liblinuxpp/net/tcp_options.hpp>
+#include <liblinuxpp/length_prefixed_message.hpp>
 
 
 linuxpp::net::tcp_datagram_socket::tcp_datagram_socket() = default;
 
 linuxpp::net::tcp_datagram_socket::tcp_datagram_socket(linuxpp::net::tcp_socket && sock) noexcept:
-    members_{std::make_tuple(linuxpp::net::tcp_socket{std::move(sock)}, std::vector<struct ::iovec>{})}
+    members_{std::make_tuple(linuxpp::net::tcp_socket{std::move(sock)}, linuxpp::length_prefixed_message_vector<msg_size_type>{})}
 {
     linuxpp::net::setsockopt<linuxpp::net::so::tcp_nodelay>(std::get<socket>(this->members_).descriptor(), 1);
 }
@@ -37,7 +38,7 @@ linuxpp::net::tcp_datagram_socket & linuxpp::net::tcp_datagram_socket::operator=
 }
 
 linuxpp::net::tcp_datagram_socket::tcp_datagram_socket(const int domain):
-    members_{std::make_tuple(linuxpp::net::tcp_socket{domain}, std::vector<struct ::iovec>{})}
+    members_{std::make_tuple(linuxpp::net::tcp_socket{domain}, linuxpp::length_prefixed_message_vector<msg_size_type>{})}
 {
     linuxpp::net::setsockopt<linuxpp::net::so::tcp_nodelay>(std::get<socket>(this->members_).descriptor(), 1);
 }
@@ -234,13 +235,9 @@ std::size_t linuxpp::net::tcp_datagram_socket::send(void const * const buf,
                                                     const std::uint16_t length,
                                                     const int flags)
 {
-    const msg_size_type network_byte_order_length = htons(static_cast<uint16_t>(length));
-    const auto iovec_array =
-        linuxpp::make_iovec_array_const(network_byte_order_length,
-                                        std::make_pair(buf, static_cast<size_t>(length)));
-
-    return std::get<socket>(this->members_).send(iovec_array.data(),
-                                                 iovec_array.size(),
+    const linuxpp::length_prefixed_message_buffer<msg_size_type> msg{buf, length};
+    return std::get<socket>(this->members_).send(msg.iovec().data(),
+                                                 msg.iovec().size(),
                                                  flags);
 }
 
@@ -248,26 +245,7 @@ std::size_t linuxpp::net::tcp_datagram_socket::send(struct ::iovec const * const
                                                     const std::size_t size_buffers,
                                                     const int flags)
 {
-    std::vector<struct ::iovec> & iovecs = std::get<iovec_vector>(this->members_);
-    iovecs.resize(size_buffers + 1);
-
-    // Determine how big the message is
-    const msg_size_type iovec_len_sum =
-        std::accumulate(buffers,
-                        buffers + size_buffers,
-                        0U,
-                        [] (const std::size_t val, const struct ::iovec iovec)
-                        {
-                            return val + iovec.iov_len;
-                        });
-
-    // Prepend the message with its length
-    const msg_size_type msg_size = htons(static_cast<uint16_t>(iovec_len_sum));
-    iovecs[0].iov_base = const_cast<msg_size_type *>(&msg_size);
-    iovecs[0].iov_len = sizeof(msg_size);
-
-    // Copy the iovec into the internal iovec vector
-    std::copy(buffers, buffers + size_buffers, iovecs.begin() + 1);
-
-    return std::get<socket>(this->members_).send(iovecs.data(), iovecs.size(), flags);
+    linuxpp::length_prefixed_message_vector<msg_size_type> & msg = std::get<iovec_vector>(this->members_);
+    msg.fill(buffers, size_buffers);
+    return std::get<socket>(this->members_).send(msg.iovec().data(), msg.iovec().size(), flags);
 }
