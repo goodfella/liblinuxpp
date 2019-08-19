@@ -4,6 +4,8 @@
 #include <sys/uio.h>
 
 #include <array>
+#include <iterator>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -100,6 +102,31 @@ namespace linuxpp
     template <class T, std::size_t N>
     struct ::iovec make_iovec(std::array<T, N> & array);
     /// @}
+
+    template <class T>
+    struct is_iovec: public std::false_type {};
+
+    template <>
+    struct is_iovec<struct ::iovec>: public std::true_type {};
+
+    template <class T, class VT>
+    struct enable_if_iovec: public std::enable_if<linuxpp::is_iovec<T>::value, VT> {};
+
+    template <class T, class VT>
+    using enable_if_iovec_t = typename linuxpp::enable_if_iovec<T, VT>::type;
+
+    /** Accumulates the iov_len members in the range represented by [first, last)
+     *
+     *  @tparam I The iterator type
+     *
+     *  @param first An iterator to the beginning of the sequence to accumulate
+     *  @param last An iterator to one past the end of the sequence to accumulate
+     *
+     *  @return The sum of the iov_len members represented in the range of [first, last)
+     **/
+    template <class I>
+    std::size_t accumulate(linuxpp::enable_if_iovec_t<typename std::iterator_traits<I>::value_type, I> first,
+                          I last);
 
 
     /** @defgroup linuxpp::make_iovec_const linuxpp::make_iovec_const
@@ -541,6 +568,19 @@ template <class T, std::size_t N>
 inline struct ::iovec linuxpp::make_iovec_const(const std::array<T, N> & array)
 {
     return linuxpp::make_iovec_const(array.data(), array.size());
+}
+
+template <class I>
+inline
+std::size_t linuxpp::accumulate(linuxpp::enable_if_iovec_t<typename std::iterator_traits<I>::value_type, I> first, I last)
+{
+    return std::accumulate(first,
+                           last,
+                           0U,
+                           [] (const std::size_t val, const struct ::iovec iovec)
+                           {
+                               return val + iovec.iov_len;
+                           });
 }
 
 #endif
