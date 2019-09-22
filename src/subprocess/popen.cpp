@@ -206,18 +206,6 @@ static int clone_handler(void * subprocess_descriptorp)
     }
 
 
-    sigset_t sigset;
-    sigfillset(&sigset);
-
-    // Unblock all signals so the child process can decide what it
-    // needs to block
-    const int sigmask_errno = pthread_sigmask(SIG_UNBLOCK, &sigset, nullptr);
-    if (sigmask_errno != 0)
-    {
-        policy.child_status->store(sigmask_errno, std::memory_order_release);
-        return 5;
-    }
-
     // First try to close all open file descriptors using the list in
     // /proc/self/fd
     const int close_via_proc = close_all_descriptors_via_proc();
@@ -249,6 +237,18 @@ static int clone_handler(void * subprocess_descriptorp)
                 ::close(i);
             }
         }
+    }
+
+    sigset_t sigset;
+    sigfillset(&sigset);
+
+    // Unblock all signals so the child process can decide what it
+    // needs to block
+    const int sigmask_errno = pthread_sigmask(SIG_UNBLOCK, &sigset, nullptr);
+    if (sigmask_errno != 0)
+    {
+        policy.child_status->store(sigmask_errno, std::memory_order_release);
+        return 5;
     }
 
     return policy.exec(policy);
