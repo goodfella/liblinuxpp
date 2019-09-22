@@ -7,6 +7,7 @@ add_library(linuxpp SHARED
   src/pipe.cpp
   src/open.cpp
   src/epoll.cpp
+  src/signal_mutex.cpp
   src/subprocess/wait.cpp
   src/subprocess/status.cpp
   src/subprocess/stream.cpp
