@@ -14,6 +14,7 @@
 #include <exception>
 #include <iterator>
 #include <memory>
+#include <mutex>
 #include <stdexcept>
 #include <system_error>
 #include <thread>
@@ -24,6 +25,7 @@
 #include <libndgpp/free.hpp>
 #include <libndgpp/strto.hpp>
 #include <liblinuxpp/file_descriptor.hpp>
+#include <liblinuxpp/signal_mutex.hpp>
 #include <liblinuxpp/subprocess/popen.hpp>
 #include <liblinuxpp/subprocess/wait.hpp>
 
@@ -31,6 +33,7 @@
 #include "stream_descriptors.hpp"
 
 std::mutex linuxpp::subprocess::popen::clone_mutex_ {};
+static linuxpp::signal_mutex signal_mutex {};
 
 struct subprocess_descriptor
 {
@@ -284,9 +287,9 @@ linuxpp::subprocess::popen::operator=(popen&&) noexcept = default;
 constexpr std::size_t stack_size = 1024 * 1024;
 static std::unique_ptr<linuxpp::subprocess::stack> child_stack;
 
-linuxpp::subprocess::popen::popen(const std::string& executable,
-                                  const linuxpp::subprocess::argv& argv,
-                                  const linuxpp::subprocess::streams& streams)
+linuxpp::pid linuxpp::subprocess::popen::clone(const std::string & executable,
+                                               const linuxpp::subprocess::argv & argv,
+                                               const linuxpp::subprocess::streams & streams)
 {
     std::atomic<int> child_status {0};
 
@@ -297,7 +300,8 @@ linuxpp::subprocess::popen::popen(const std::string& executable,
                    });
     cmdline.push_back(nullptr);
 
-    std::unique_lock<std::mutex> lock(clone_mutex_);
+    std::unique_lock<std::mutex> clone_lock {clone_mutex_};
+    std::unique_lock<linuxpp::signal_mutex> signal_lock {::signal_mutex};
 
     if (!child_stack)
     {
@@ -334,66 +338,6 @@ linuxpp::subprocess::popen::popen(const std::string& executable,
                                       stderr,
                                       &child_status,
                                       &popen_execve};
-
-    const int ret = ::clone(&clone_handler,
-                            child_stack->get(),
-                            CLONE_VM | CLONE_VFORK | SIGCHLD,
-                            &descriptor);
-
-    if (ret == -1)
-    {
-        throw ndgpp_error(std::system_error,
-                          std::error_code (errno, std::system_category()),
-                          "clone failed");
-    }
-
-    const int exec_status = child_status.load(std::memory_order_acquire);
-    if (exec_status != 0)
-    {
-        // The clone_handler either failed to set up the streams, or
-        // exec failed.  Call waitid to prevent zombie processes.
-        try
-        {
-            siginfo_t siginfo = {};
-            linuxpp::subprocess::waitid(P_PID,
-                                        ret,
-                                        siginfo,
-                                        WEXITED);
-        }
-        catch (...)
-        {
-            // This is a very pathological case.  For some reason, the
-            // clone_handler failed, and the waitid system call
-            // failed.  For now let's just try to throw the error
-            // associated with clone_handler failing.
-        }
-
-        throw ndgpp_error(std::system_error,
-                          std::error_code (exec_status, std::system_category()),
-                          "subprocess execution failed");
-    }
-
-    if (stdin)
-    {
-        std::get<stdin_stream>(this->members_).reset(handle_parent_stream(stdin.write_fd(),
-                                                                          stdin.read_fd()));
-    }
-
-    if (stdout)
-    {
-        std::get<stdout_stream>(this->members_).reset(handle_parent_stream(stdout.read_fd(),
-                                                                           stdout.write_fd()));
-    }
-
-    if (stderr)
-    {
-        std::get<stderr_stream>(this->members_).reset(handle_parent_stream(stderr.read_fd(),
-                                                                           stderr.write_fd()));
-    }
-
-    lock.unlock();
-
-    std::get<child_pid>(this->members_).reset(ret);
 
     /* clone flags justifications:
      *
@@ -453,6 +397,72 @@ linuxpp::subprocess::popen::popen(const std::string& executable,
      * - CLONE_THREAD not set.  We want a different thread group
      * - CLONE_UNTRACED not set.
      */
+    const int ret = ::clone(&clone_handler,
+                            child_stack->get(),
+                            CLONE_VM | CLONE_VFORK | SIGCHLD,
+                            &descriptor);
+
+    if (ret == -1)
+    {
+        throw ndgpp_error(std::system_error,
+                          std::error_code (errno, std::system_category()),
+                          "clone failed");
+    }
+
+    const int exec_status = child_status.load(std::memory_order_acquire);
+    if (exec_status != 0)
+    {
+        // The clone_handler either failed to set up the streams, or
+        // exec failed.  Call waitid to prevent zombie processes.
+        try
+        {
+            siginfo_t siginfo = {};
+            linuxpp::subprocess::waitid(P_PID,
+                                        ret,
+                                        siginfo,
+                                        WEXITED);
+        }
+        catch (...)
+        {
+            // This is a very pathological case.  For some reason, the
+            // clone_handler failed, and the waitid system call
+            // failed.  For now let's just try to throw the error
+            // associated with clone_handler failing.
+        }
+
+        throw ndgpp_error(std::system_error,
+                          std::error_code (exec_status, std::system_category()),
+                          "subprocess execution failed");
+    }
+
+    if (stdin)
+    {
+        std::get<stdin_stream>(this->members_).reset(handle_parent_stream(stdin.write_fd(),
+                                                                          stdin.read_fd()));
+    }
+
+    if (stdout)
+    {
+        std::get<stdout_stream>(this->members_).reset(handle_parent_stream(stdout.read_fd(),
+                                                                           stdout.write_fd()));
+    }
+
+    if (stderr)
+    {
+        std::get<stderr_stream>(this->members_).reset(handle_parent_stream(stderr.read_fd(),
+                                                                           stderr.write_fd()));
+    }
+
+    return linuxpp::pid {ret};
+}
+
+linuxpp::subprocess::popen::popen(const std::string& executable,
+                                  const linuxpp::subprocess::argv& argv,
+                                  const linuxpp::subprocess::streams& streams)
+{
+    std::get<child_pid>(this->members_) = this->clone(executable,
+                                                      argv,
+                                                      streams);
 }
 
 linuxpp::subprocess::popen::~popen()

@@ -114,6 +114,9 @@ namespace subprocess
         private:
 
         linuxpp::subprocess::status wait(const int options);
+        linuxpp::pid clone(const std::string & executable,
+                           const linuxpp::subprocess::argv & argv,
+                           const linuxpp::subprocess::streams & streams);
 
         enum members
         {
