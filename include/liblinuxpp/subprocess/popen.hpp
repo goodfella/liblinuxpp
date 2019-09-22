@@ -133,8 +133,6 @@ namespace subprocess
                                       linuxpp::unique_fd<>,
                                       linuxpp::subprocess::status>;
         tuple_type members_ = {};
-
-        static std::mutex clone_mutex_;
     };
 
     inline void popen::swap(popen & other) noexcept

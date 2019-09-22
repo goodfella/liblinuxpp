@@ -32,7 +32,7 @@
 #include "stack.hpp"
 #include "stream_descriptors.hpp"
 
-std::mutex linuxpp::subprocess::popen::clone_mutex_ {};
+static std::mutex clone_mutex {};
 static linuxpp::signal_mutex signal_mutex {};
 
 struct subprocess_descriptor
@@ -300,7 +300,7 @@ linuxpp::pid linuxpp::subprocess::popen::clone(const std::string & executable,
                    });
     cmdline.push_back(nullptr);
 
-    std::unique_lock<std::mutex> clone_lock {clone_mutex_};
+    std::unique_lock<std::mutex> clone_lock {::clone_mutex};
     std::unique_lock<linuxpp::signal_mutex> signal_lock {::signal_mutex};
 
     if (!child_stack)
