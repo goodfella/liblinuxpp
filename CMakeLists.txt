@@ -16,6 +16,7 @@ add_library(linuxpp SHARED
   src/subprocess/fd_stream.cpp
   src/subprocess/stream_descriptors.cpp
   src/subprocess/argv.cpp
+  src/subprocess/stack.cpp
   src/subprocess/popen.cpp
   src/net/socket.cpp
   src/net/accept.cpp

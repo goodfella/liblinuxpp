@@ -1,8 +1,12 @@
+#include <dirent.h>
 #include <signal.h>
+#include <sys/resource.h>
+#include <sys/time.h>
 #include <sys/types.h>
 #include <unistd.h>
 
 #include <cerrno>
+#include <cstddef>
 #include <cstdlib>
 
 #include <algorithm>
@@ -17,10 +21,14 @@
 
 #include <libndgpp/error.hpp>
 
-#include "stream_descriptors.hpp"
+#include <libndgpp/free.hpp>
+#include <libndgpp/strto.hpp>
 #include <liblinuxpp/file_descriptor.hpp>
 #include <liblinuxpp/subprocess/popen.hpp>
 #include <liblinuxpp/subprocess/wait.hpp>
+
+#include "stack.hpp"
+#include "stream_descriptors.hpp"
 
 std::mutex linuxpp::subprocess::popen::clone_mutex_ {};
 
@@ -34,6 +42,17 @@ struct subprocess_descriptor
     std::atomic<int>* child_status;
     int (*exec)(const subprocess_descriptor&);
 };
+
+namespace detail
+{
+    struct closedir
+    {
+        void operator () (DIR * dir)
+        {
+            ::closedir(dir);
+        }
+    };
+}
 
 static int popen_execve(const subprocess_descriptor& policy)
 {
@@ -81,6 +100,72 @@ static inline bool handle_child_stream(const int owned_fd,
     ::close(owned_fd);
 
     return true;
+}
+
+static int close_all_descriptors_via_proc()
+{
+    std::unique_ptr<::DIR, detail::closedir> dirptr{::opendir("/proc/self/fd")};
+    if (!dirptr)
+    {
+        return errno;
+    }
+
+    // file descriptor list via proc is accessible so close FD's based on that
+    const int dirfd = ::dirfd(dirptr.get());
+    if (dirfd == -1)
+    {
+        return errno;
+    }
+
+    const long name_max = [dirfd] () {
+        const long name_max = ::fpathconf(dirfd, _PC_NAME_MAX);
+        return name_max != -1 ? name_max : NAME_MAX;
+    }();
+
+    std::unique_ptr<struct ::dirent, ndgpp::free> direntp{
+        static_cast<struct ::dirent*>(malloc(offsetof(struct ::dirent, d_name) + name_max + 1))};
+
+    if (!direntp)
+    {
+        return ENOMEM;
+    }
+
+    struct ::dirent * dirent_retp;
+
+    {
+        const int ret = ::readdir_r(dirptr.get(), direntp.get(), &dirent_retp);
+        if (ret != 0)
+        {
+            return ret;
+        }
+
+        if (!dirent_retp)
+        {
+            return ENOENT;
+        }
+    }
+
+    do {
+        const ndgpp::strto_result<int> res = ndgpp::strtoi<int>(direntp->d_name, 10);
+        if (res)
+        {
+            const int fd = res.value();
+            if (fd != STDIN_FILENO && fd != STDOUT_FILENO && fd != STDERR_FILENO && fd != dirfd)
+            {
+                ::close(fd);
+            }
+        }
+
+        const int ret = ::readdir_r(dirptr.get(), direntp.get(), &dirent_retp);
+        if (ret != 0)
+        {
+            // some error was encountered
+            return ret;
+        }
+
+    } while (dirent_retp);
+
+    return 0;
 }
 
 static int clone_handler(void * subprocess_descriptorp)
@@ -133,6 +218,39 @@ static int clone_handler(void * subprocess_descriptorp)
         return 5;
     }
 
+    // First try to close all open file descriptors using the list in
+    // /proc/self/fd
+    const int close_via_proc = close_all_descriptors_via_proc();
+
+    if (close_via_proc != 0)
+    {
+        // Unable to close file descriptors through proc, so just
+        // brute force it
+
+        struct rlimit rlimit;
+        const int ret = ::getrlimit(RLIMIT_NOFILE, &rlimit);
+        if (ret != 0)
+        {
+            policy.child_status->store(errno, std::memory_order_release);
+            return 6;
+        }
+
+        if (rlimit.rlim_cur != RLIM_INFINITY)
+        {
+            for (int i = 0; i < static_cast<int>(rlimit.rlim_cur); ++i)
+            {
+                // Close all the remaining open file descriptors
+                if (i == STDIN_FILENO || i == STDOUT_FILENO || i == STDERR_FILENO)
+                {
+                    // Do not close stdin, stdout, and stderr
+                    continue;
+                }
+
+                ::close(i);
+            }
+        }
+    }
+
     return policy.exec(policy);
 }
 
@@ -163,12 +281,13 @@ linuxpp::subprocess::popen::popen(popen&&) noexcept = default;
 linuxpp::subprocess::popen &
 linuxpp::subprocess::popen::operator=(popen&&) noexcept = default;
 
+constexpr std::size_t stack_size = 1024 * 1024;
+static std::unique_ptr<linuxpp::subprocess::stack> child_stack;
+
 linuxpp::subprocess::popen::popen(const std::string& executable,
                                   const linuxpp::subprocess::argv& argv,
                                   const linuxpp::subprocess::streams& streams)
 {
-    constexpr std::size_t stack_size = 1024 * 1024;
-    std::unique_ptr<char []> child_stack {new char[stack_size]};
     std::atomic<int> child_status {0};
 
     std::vector<char*> cmdline (1U, const_cast<char*>(executable.c_str()));
@@ -179,6 +298,11 @@ linuxpp::subprocess::popen::popen(const std::string& executable,
     cmdline.push_back(nullptr);
 
     std::unique_lock<std::mutex> lock(clone_mutex_);
+
+    if (!child_stack)
+    {
+        child_stack = std::make_unique<linuxpp::subprocess::stack>(stack_size);
+    }
 
     /// Open each stream's file descriptors behind the mutex to
     /// prevent leaking file descriptors to other threads creating a
@@ -212,7 +336,7 @@ linuxpp::subprocess::popen::popen(const std::string& executable,
                                       &popen_execve};
 
     const int ret = ::clone(&clone_handler,
-                            child_stack.get() + (stack_size - 1),
+                            child_stack->get(),
                             CLONE_VM | CLONE_VFORK | SIGCHLD,
                             &descriptor);
 
@@ -238,7 +362,7 @@ linuxpp::subprocess::popen::popen(const std::string& executable,
         }
         catch (...)
         {
-            // This is very pathological case.  For some reason, the
+            // This is a very pathological case.  For some reason, the
             // clone_handler failed, and the waitid system call
             // failed.  For now let's just try to throw the error
             // associated with clone_handler failing.

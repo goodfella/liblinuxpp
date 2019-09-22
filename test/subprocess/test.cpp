@@ -195,6 +195,22 @@ TEST(member_tests, poll_exit_code_zero)
     }
 }
 
+TEST(close_all_file_descriptors, test)
+{
+    linuxpp::pipe pipe(linuxpp::nocloexec, 0);
+    linuxpp::subprocess::popen bin{test_path, {"--closed-fd", pipe.read_fd().get(), "--exit-code", 0},
+        {}};
+
+    ASSERT_TRUE(wait_for(bin, std::chrono::seconds{5}));
+
+    const auto status = bin.status();
+    EXPECT_TRUE(static_cast<bool>(status));
+    EXPECT_TRUE(status.exited());
+    EXPECT_TRUE(status.called_exit());
+    EXPECT_FALSE(status.signaled());
+    EXPECT_EQ(0, status.exit_code());
+}
+
 class stream_test: public ::testing::Test
 {
     protected:
@@ -482,6 +498,7 @@ struct test_settings
     std::string stderr_value = {};
     int exit_code = 0;
     int wait_for_signal = false;
+    int closed_fd = -1;
 };
 
 int main(int argc, char ** argv)
@@ -551,6 +568,12 @@ int main(int argc, char ** argv)
                 return 5;
             }
         }
+
+        if (strcmp(argv[i], "--closed-fd") == 0)
+        {
+            settings.closed_fd = std::atoi(argv[i + 1]);
+            settings.run_tests = false;
+        }
     }
 
     if (settings.run_tests)
@@ -601,6 +624,15 @@ int main(int argc, char ** argv)
     {
         std::cerr << settings.stderr_value;
         std::cerr.flush();
+    }
+
+    if (settings.closed_fd != -1)
+    {
+        const int fd = ::fcntl(settings.closed_fd, F_GETFD);
+        if (fd != -1)
+        {
+            return 8;
+        }
     }
 
     return settings.exit_code;
