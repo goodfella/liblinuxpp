@@ -1,4 +1,5 @@
 #include <dirent.h>
+#include <sched.h>
 #include <signal.h>
 #include <sys/resource.h>
 #include <sys/time.h>
