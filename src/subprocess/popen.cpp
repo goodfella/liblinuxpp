@@ -301,8 +301,8 @@ linuxpp::pid linuxpp::subprocess::popen::clone(const std::string & executable,
                    });
     cmdline.push_back(nullptr);
 
-    std::unique_lock<std::mutex> clone_lock {::clone_mutex};
-    std::unique_lock<linuxpp::signal_mutex> signal_lock {::signal_mutex};
+    std::lock_guard<std::mutex> clone_lock {::clone_mutex};
+    std::lock_guard<linuxpp::signal_mutex> signal_lock {::signal_mutex};
 
     if (!child_stack)
     {
