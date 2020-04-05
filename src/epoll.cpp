@@ -47,6 +47,9 @@ linuxpp::epoll::epoll():
     }
 }
 
+linuxpp::epoll::epoll(linuxpp::epoll &&) = default;
+linuxpp::epoll & linuxpp::epoll::operator=(linuxpp::epoll &&) = default;
+
 void linuxpp::epoll::add(const int fd, const uint32_t events)
 {
     this->add(fd, make_epoll_event(fd, events));
@@ -67,17 +70,28 @@ void linuxpp::epoll::add(const int fd, const uint32_t events, const uint64_t con
     this->add(fd, make_epoll_event(fd, events, context));
 }
 
-void linuxpp::epoll::del(const int fd)
+linuxpp::syscall_return<int> linuxpp::epoll::del(std::nothrow_t,
+                                                 const int fd)
 {
     const int ret = ::epoll_ctl(std::get<epoll_fd>(this->members_).get(),  EPOLL_CTL_DEL, fd, nullptr);
     if (ret != 0)
     {
-        throw ndgpp_error(std::system_error,
-                          std::error_code{errno, std::system_category()},
-                          "epoll_ctl::EPOLL_CTL_DEL failed");
+        return linuxpp::syscall_return<int> {errno, ret};
     }
 
     --std::get<size_events>(this->members_);
+    return linuxpp::syscall_return<int>(0);
+}
+
+void linuxpp::epoll::del(const int fd)
+{
+    const auto ret = this->del(std::nothrow, fd);
+    if (!ret)
+    {
+        throw ndgpp_error(std::system_error,
+                          std::error_code{ret.errno_value(), std::system_category()},
+                          "epoll_ctl::EPOLL_CTL_DEL failed");
+    }
 }
 
 
@@ -175,4 +189,20 @@ void linuxpp::epoll::wait(std::vector<epoll_event>& events, const int timeout)
     }
 
     events.resize(static_cast<std::size_t>(ret));
+}
+
+linuxpp::syscall_return<int> linuxpp::epoll::wait(std::nothrow_t, std::vector<epoll_event> & events)
+{
+    events.resize(std::get<size_events>(this->members_));
+    const int ret = ::epoll_wait(std::get<epoll_fd>(this->members_).get(),
+                                 events.data(),
+                                 events.size(),
+                                 -1);
+    if (ret == -1)
+    {
+        return linuxpp::syscall_return<int> {errno, ret};
+    }
+
+    events.resize(static_cast<std::size_t>(ret));
+    return linuxpp::syscall_return<int> {ret};
 }

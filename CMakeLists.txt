@@ -8,6 +8,9 @@ add_library(linuxpp SHARED
   src/open.cpp
   src/epoll.cpp
   src/signal_mutex.cpp
+  src/eventfd.cpp
+  src/monotonic_timerfd.cpp
+  src/ioloop.cpp
   src/subprocess/wait.cpp
   src/subprocess/status.cpp
   src/subprocess/stream.cpp

@@ -17,7 +17,7 @@ namespace linuxpp
      *
      *  @throws ndgpp::error<std::system_error> when an error is encountered
      */
-    inline std::size_t read(const int fd, char * const buf, const std::size_t length)
+    inline std::size_t read(const int fd, void * const buf, const std::size_t length)
     {
         const ssize_t ret = ::read(fd, buf, length);
         if (ret == -1)
