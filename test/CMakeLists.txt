@@ -22,5 +22,6 @@ liblinux_test(SOURCE_PATH pipe/test.cpp LINK_GTEST_MAIN)
 liblinux_test(SOURCE_PATH subprocess/test.cpp)
 liblinux_test(SOURCE_PATH syscall_return/test.cpp LINK_GTEST_MAIN)
 liblinux_test(SOURCE_PATH iovec/test.cpp LINK_GTEST_MAIN)
+liblinux_test(SOURCE_PATH ioloop/test.cpp LINK_GTEST_MAIN)
 
 add_subdirectory(net)
