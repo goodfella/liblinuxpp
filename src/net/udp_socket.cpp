@@ -20,7 +20,7 @@
 #include <liblinuxpp/net/udp_socket.hpp>
 
 
-linuxpp::net::udp_socket::udp_socket() noexcept = default;
+linuxpp::net::udp_socket::udp_socket() = default;
 
 linuxpp::net::udp_socket::udp_socket(const int domain):
     members_{linuxpp::unique_fd<>{linuxpp::net::socket(domain, SOCK_DGRAM, 0)}}

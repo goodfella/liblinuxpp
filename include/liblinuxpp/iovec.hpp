@@ -5,6 +5,7 @@
 
 #include <array>
 #include <iterator>
+#include <numeric>
 #include <type_traits>
 #include <utility>
 #include <vector>

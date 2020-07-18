@@ -121,36 +121,24 @@ static int close_all_descriptors_via_proc()
         return errno;
     }
 
-    const long name_max = [dirfd] () {
-        const long name_max = ::fpathconf(dirfd, _PC_NAME_MAX);
-        return name_max != -1 ? name_max : NAME_MAX;
-    }();
-
-    std::unique_ptr<struct ::dirent, ndgpp::free> direntp{
-        static_cast<struct ::dirent*>(malloc(offsetof(struct ::dirent, d_name) + name_max + 1))};
-
-    if (!direntp)
-    {
-        return ENOMEM;
-    }
-
-    struct ::dirent * dirent_retp;
+    struct ::dirent const * dirent = nullptr;
 
     {
-        const int ret = ::readdir_r(dirptr.get(), direntp.get(), &dirent_retp);
-        if (ret != 0)
+        errno = 0;
+        dirent = ::readdir(dirptr.get());
+        if (dirent == nullptr && errno != 0)
         {
-            return ret;
+            return errno;
         }
 
-        if (!dirent_retp)
+        if (dirent == nullptr)
         {
             return ENOENT;
         }
     }
 
     do {
-        const ndgpp::strto_result<int> res = ndgpp::strtoi<int>(direntp->d_name, 10);
+        const ndgpp::strto_result<int> res = ndgpp::strtoi<int>(dirent->d_name, 10);
         if (res)
         {
             const int fd = res.value();
@@ -160,14 +148,20 @@ static int close_all_descriptors_via_proc()
             }
         }
 
-        const int ret = ::readdir_r(dirptr.get(), direntp.get(), &dirent_retp);
-        if (ret != 0)
+        errno = 0;
+        dirent = ::readdir(dirptr.get());
+        if (dirent == nullptr && errno != 0)
         {
             // some error was encountered
-            return ret;
+            return errno;
         }
 
-    } while (dirent_retp);
+        if (dirent == nullptr)
+        {
+            break;
+        }
+
+    } while (true);
 
     return 0;
 }
@@ -278,7 +272,7 @@ static int handle_parent_stream(const int parent_fd,
     }
 }
 
-linuxpp::subprocess::popen::popen() noexcept = default;
+linuxpp::subprocess::popen::popen() = default;
 
 linuxpp::subprocess::popen::popen(popen&&) noexcept = default;
 

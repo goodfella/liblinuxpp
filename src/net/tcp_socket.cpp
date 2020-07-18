@@ -10,7 +10,7 @@
 #include <liblinuxpp/net/tcp_socket.hpp>
 
 
-linuxpp::net::tcp_socket::tcp_socket() noexcept = default;
+linuxpp::net::tcp_socket::tcp_socket() = default;
 
 linuxpp::net::tcp_socket::tcp_socket(tcp_socket &&) noexcept = default;
 linuxpp::net::tcp_socket & linuxpp::net::tcp_socket::operator= (linuxpp::net::tcp_socket &&) noexcept = default;

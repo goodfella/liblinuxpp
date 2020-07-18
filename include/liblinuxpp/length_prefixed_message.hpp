@@ -143,7 +143,7 @@ namespace linuxpp
     {
         this->iovec_.front() =
             linuxpp::make_iovec_const(std::make_pair(&this->length_, std::size_t{1U}));
-        std::copy(buffers, buffers + N, this->iovec.begin());
+        std::copy(buffers, buffers + N, this->iovec().begin());
     }
 
     template <class T, std::size_t N>

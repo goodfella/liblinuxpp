@@ -5,6 +5,7 @@
 
 #include <mutex>
 #include <tuple>
+#include <type_traits>
 #include <utility>
 
 #include <liblinuxpp/subprocess/stream.hpp>
@@ -44,7 +45,7 @@ namespace subprocess
               const linuxpp::subprocess::argv& argv,
               const linuxpp::subprocess::streams& streams);
 
-        popen() noexcept;
+        popen();
 
         ~popen();
 

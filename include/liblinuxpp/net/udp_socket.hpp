@@ -26,7 +26,7 @@ namespace net
         public:
 
         /// Constructs a udp_socket object with no underlying socket
-        udp_socket() noexcept;
+        udp_socket();
 
         /** Constructs a UDP socket using the specified domain
          *

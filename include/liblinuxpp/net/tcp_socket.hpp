@@ -26,7 +26,7 @@ namespace net
         public:
 
         /// Constructs a tcp_socket object with no underlying socket
-        tcp_socket() noexcept;
+        tcp_socket();
 
         /** Constructs a tcp_socket object from a socket descriptor
          *
