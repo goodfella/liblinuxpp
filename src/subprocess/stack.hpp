@@ -18,7 +18,6 @@ namespace subprocess
 
         private:
 
-        bool grows_down_;
         std::size_t size_;
         std::unique_ptr<char[]> memory_;
     };
