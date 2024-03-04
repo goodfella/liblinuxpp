@@ -282,7 +282,7 @@ TEST(make_iovec_const, void_const_pointer_pair)
 
 TEST(make_iovec_const, array)
 {
-    std::array<int, 5> array;
+    std::array<int, 5> array {};
     auto iovec = linuxpp::make_iovec_const(array);
     EXPECT_EQ(sizeof(int) * array.size(), iovec.iov_len);
     EXPECT_EQ(array.data(), iovec.iov_base);

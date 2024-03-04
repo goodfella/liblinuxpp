@@ -14,6 +14,8 @@ namespace subprocess
     {
         public:
 
+        path_stream() = default;
+
         explicit
         path_stream(const std::string& path);
 

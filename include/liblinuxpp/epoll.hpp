@@ -6,9 +6,11 @@
 #include <cstdint>
 
 #include <chrono>
+#include <new>
 #include <tuple>
 #include <vector>
 
+#include <liblinuxpp/syscall_return.hpp>
 #include <liblinuxpp/unique_fd.hpp>
 
 namespace linuxpp
@@ -26,6 +28,9 @@ namespace linuxpp
 
         epoll(const epoll&) = delete;
         epoll& operator= (const epoll&) = delete;
+
+        epoll(epoll &&);
+        epoll & operator= (epoll&&);
 
         /** Adds a file descriptor to the epoll fd
          *
@@ -64,6 +69,13 @@ namespace linuxpp
          *  @throws ndgpp::error<std::system_error> if an error is encountered
          */
         void del(const int fd);
+
+        /** Deletes fd from the epoll
+         *
+         *  @param fd The file descriptor to remove
+         *
+         */
+        linuxpp::syscall_return<int> del(std::nothrow_t, const int fd);
 
         /** Modifies a file descriptor's epoll_event object
          *
@@ -114,6 +126,13 @@ namespace linuxpp
          *  @throws ndgpp::error<std::system_error> if an error is encountered
          */
         void wait(std::vector<epoll_event>& events);
+
+        /** Waits an unlimited amount of time for an event on the monitored file descriptors
+         *
+         *  @return A linuxpp::syscall_return<int> object representing
+         *  the return status of the system call
+         */
+        linuxpp::syscall_return<int> wait(std::nothrow_t, std::vector<epoll_event> & events);
 
         /** Waits for an event on the monitored file descriptors
          *

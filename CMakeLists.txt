@@ -8,6 +8,9 @@ add_library(linuxpp SHARED
   src/open.cpp
   src/epoll.cpp
   src/signal_mutex.cpp
+  src/eventfd.cpp
+  src/monotonic_timerfd.cpp
+  src/ioloop.cpp
   src/subprocess/wait.cpp
   src/subprocess/status.cpp
   src/subprocess/stream.cpp
@@ -34,8 +37,8 @@ add_library(linuxpp SHARED
 
 target_include_directories(linuxpp INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_include_directories(linuxpp PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
-target_compile_options(linuxpp INTERFACE -std=c++14)
-target_compile_options(linuxpp PRIVATE -std=c++14 -pedantic -Wall -Werror)
+target_compile_options(linuxpp INTERFACE -std=gnu++14)
+target_compile_options(linuxpp PRIVATE -std=gnu++14 -Wall -Werror)
 target_link_libraries(linuxpp ndgpp)
 
 set(liblinuxpp_compiler_flags -pedantic -Wall -Werror)
