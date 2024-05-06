@@ -75,7 +75,7 @@ namespace linuxpp
          *
          *  @param fd The value the object is to be to assigned to
          */
-        void reset(T fd = type_traits::invalid_value) noexcept;
+        void reset(const T fd = type_traits::invalid_value) noexcept;
 
         /** Sets the underlying descriptor to type_traits::invalid_value
          *
